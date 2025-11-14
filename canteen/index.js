@@ -21,8 +21,8 @@ cluster.start(port, nodes).then(() => {
   // Start scheduler
   scheduler.start(
     new Web3.providers.HttpProvider('http://localhost:8545'),
-    '0xfF68CbE54a1104B3b52E7400b3Bf5653741a6b8C', // updated deployed contract address
-    '0xbc778caa6c1a8d8d747deda272670ba8636e0998f79bcdae47fb15568bca3e6a'
+    '0x8CFCC7a1826DA4f4b7ca856A9E8820a3Afefe102', // Deployed Canteen contract address
+    '0xd5484d3d5b12d261bb07206e2b8fdccf71f6f5177b7d87c186acf11f717d0e27' // Ganache account (0) private key
   )
 
   // Start web server (configurable port)

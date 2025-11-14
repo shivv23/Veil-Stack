@@ -7,7 +7,7 @@ import _ from 'lodash'
 import Cluster from './cluster.js'
 
 class CanteenScheduler {
-  async start(provider, contractAddress, privateKey, dockerPath = '/var/run/docker.sock') {
+  async start(provider, contractAddress, privateKey, dockerPath) {
     const web3 = new Web3(provider)
     // Derive an account from the provided private key and add it to the wallet
     const acct = privateKey ? web3.eth.accounts.privateKeyToAccount(privateKey) : web3.eth.accounts.create()
@@ -18,6 +18,22 @@ class CanteenScheduler {
 
     // Instantiate contract with a default from address
     const contract = new web3.eth.Contract(Canteen.abi, contractAddress, { from: fromAddress })
+
+    // Auto-detect Docker socket path
+    if (!dockerPath) {
+      const desktopSocket = `${process.env.HOME}/.docker/desktop/docker.sock`
+      const defaultSocket = '/var/run/docker.sock'
+      
+      if (fs.existsSync(desktopSocket)) {
+        dockerPath = desktopSocket
+        console.log('Using Docker Desktop socket:', dockerPath)
+      } else if (fs.existsSync(defaultSocket)) {
+        dockerPath = defaultSocket
+        console.log('Using default Docker socket:', dockerPath)
+      } else {
+        throw new Error('Could not find Docker socket. Is Docker running?')
+      }
+    }
 
     const docker = new Docker({socketPath: dockerPath})
 
@@ -110,6 +126,17 @@ class CanteenScheduler {
     if (this.scheduledImage.length === 0) return
 
     this.docker.pull(scheduledImage, (err, stream) => {
+      if (err) {
+        console.error(`Error pulling image '${scheduledImage}':`, err.message)
+        console.error('Make sure Docker is running and the image name is correct.')
+        return
+      }
+
+      if (!stream) {
+        console.error(`No stream returned when pulling image '${scheduledImage}'`)
+        return
+      }
+
       console.log('')
 
       this.docker.modem.followProgress(stream, finished.bind(this), progress)
