@@ -1,4 +1,4 @@
-import Web3 from 'web3'
+import { Web3 } from 'web3'
 import fs from 'fs'
 import path from 'path'
 const Canteen = JSON.parse(fs.readFileSync(path.resolve('./build/contracts/Canteen.json'), 'utf-8'))
@@ -7,17 +7,28 @@ import _ from 'lodash'
 import Cluster from './cluster.js'
 
 class CanteenScheduler {
-  async start(provider, contractAddress, privateKey, dockerPath) {
+  async start(provider, contractAddress, privateKey, dockerPath, readOnlyMode = false) {
     const web3 = new Web3(provider)
-    // Derive an account from the provided private key and add it to the wallet
-    const acct = privateKey ? web3.eth.accounts.privateKeyToAccount(privateKey) : web3.eth.accounts.create()
-    // Add to wallet to enable signing transactions with web3 v4
-    web3.eth.accounts.wallet.add(acct)
-    // Keep a plain address string handy
-    const fromAddress = acct.address
+    
+    this.readOnlyMode = readOnlyMode || !privateKey
+    
+    let acct, fromAddress
+    
+    if (!this.readOnlyMode) {
+      // Legacy mode: Use private key for auto-registration
+      acct = web3.eth.accounts.privateKeyToAccount(privateKey)
+      web3.eth.accounts.wallet.add(acct)
+      fromAddress = acct.address
+      console.log('🔑 Scheduler running in LEGACY mode with private key')
+    } else {
+      // Read-only mode: No private key, listen to events only
+      console.log('👁️  Scheduler running in READ-ONLY mode')
+      console.log('📱 Node registration must be done via MetaMask frontend')
+      fromAddress = null // No account needed for read-only
+    }
 
-    // Instantiate contract with a default from address
-    const contract = new web3.eth.Contract(Canteen.abi, contractAddress, { from: fromAddress })
+    // Instantiate contract
+    const contract = new web3.eth.Contract(Canteen.abi, contractAddress, fromAddress ? { from: fromAddress } : {})
 
     // Auto-detect Docker socket path
     if (!dockerPath) {
@@ -39,19 +50,113 @@ class CanteenScheduler {
 
     this.docker = docker
     this.contract = contract
-  this.account = acct
-  this.accountAddress = fromAddress
+    this.account = acct
+    this.accountAddress = fromAddress
     this.web3 = web3
 
     try {
-      await this.registerNode()
-      setInterval(async () => await this.loop(), 1000)
+      if (!this.readOnlyMode) {
+        // Legacy mode: Auto-register node
+        await this.registerNode()
+        setInterval(async () => await this.loop(), 1000)
+      } else {
+        // Read-only mode: Just listen to events
+        console.log('⏳ Waiting for node registration via MetaMask...')
+        this.listenToEvents()
+      }
     } catch (error) {
       console.error(error)
     }
 
     // await this.updateScheduler('rethinkdb:latest')
     // await this.updateScheduler('crccheck/hello-world')
+  }
+
+  /**
+   * Listen to contract events (Read-only mode)
+   * Uses polling since HTTP provider doesn't support subscriptions
+   */
+  listenToEvents() {
+    if (!this.contract) {
+      console.error('❌ Contract not initialized')
+      return
+    }
+
+    console.log('👂 Polling for contract events (HTTP provider)...')
+    console.log('ℹ️  Checking for new events every 15 seconds')
+    
+    // Track last processed block
+    this.lastProcessedBlock = 0
+    
+    // Initialize and start polling
+    this.pollForEvents()
+    
+    // Poll every 15 seconds
+    this.eventPollingInterval = setInterval(() => {
+      this.pollForEvents()
+    }, 15000)
+  }
+
+  async pollForEvents() {
+    try {
+      // Get current block number
+      const currentBlock = await this.web3.eth.getBlockNumber()
+      
+      // First time, just set the starting block
+      if (this.lastProcessedBlock === 0) {
+        this.lastProcessedBlock = Number(currentBlock) - 1
+        console.log(`✅ Started monitoring from block ${this.lastProcessedBlock}`)
+        return
+      }
+
+      // Get events from last processed block to current
+      const events = await this.contract.getPastEvents('allEvents', {
+        fromBlock: this.lastProcessedBlock + 1,
+        toBlock: currentBlock
+      })
+
+      // Process each event
+      for (const event of events) {
+        console.log(`📡 Event detected: ${event.event} (Block ${event.blockNumber})`)
+        
+        if (event.event === 'MemberJoin') {
+          const { host } = event.returnValues
+          console.log(`➕ MemberJoin: ${host}`)
+          if (host === Cluster.getHost()) {
+            console.log('✅ This node has been registered!')
+            // Start the scheduling loop
+            if (!this.loopInterval) {
+              this.loopInterval = setInterval(async () => await this.loop(), 1000)
+            }
+          }
+        } else if (event.event === 'MemberLeave') {
+          const { host } = event.returnValues
+          console.log(`➖ MemberLeave: ${host}`)
+          if (host === Cluster.getHost()) {
+            console.log('This node has been removed')
+            // Stop the scheduling loop
+            if (this.loopInterval) {
+              clearInterval(this.loopInterval)
+              this.loopInterval = null
+            }
+            await this.cleanup()
+          }
+        } else if (event.event === 'MemberImageUpdate') {
+          const { host, image } = event.returnValues
+          console.log(`🔄 MemberImageUpdate: ${host} -> ${image}`)
+          if (host === Cluster.getHost()) {
+            console.log(`📦 New image assigned to this node: ${image}`)
+            // The loop will pick this up automatically
+          }
+        }
+      }
+
+      // Update last processed block
+      this.lastProcessedBlock = Number(currentBlock)
+      
+    } catch (error) {
+      console.error('❌ Error polling events:', error.message)
+    }
   }
 
   async loop() {
@@ -219,6 +324,12 @@ class CanteenScheduler {
 
   async cleanup() {
     console.log('Scheduler stopping; stopping and removing binded container.')
+
+    // Stop event polling
+    if (this.eventPollingInterval) {
+      clearInterval(this.eventPollingInterval)
+      this.eventPollingInterval = null
+    }
 
     if (this.container) {
       await this.container.stop()

@@ -105,9 +105,9 @@ class App extends Component {
   constructor(props) {
     super(props)
 
-    const CONTRACT_ADDRESS = process.env.REACT_APP_CANTEEN_CONTRACT || '0x3534EFCa1ffe18A955e16de775c251ba95224bAF'
-    const PROVIDER_URL = process.env.REACT_APP_WEB3_PROVIDER || 'http://localhost:8545'
-    this.CLUSTER_URL = process.env.REACT_APP_CLUSTER_URL || 'http://localhost:3000/cluster'
+  const CONTRACT_ADDRESS = process.env.REACT_APP_ETH_CONTRACT_ADDRESS || '0xCONTRACT_ADDRESS'
+    const PROVIDER_URL = process.env.REACT_APP_ETH_RPC_URL || 'http://localhost:8545'
+    this.CLUSTER_URL = process.env.REACT_APP_CLUSTER_URL || 'http://localhost:5001/cluster'
 
     this.state = {
       status: 'connecting...',
@@ -122,11 +122,18 @@ class App extends Component {
         remove: {
           imageName: ''
         }
-      }
+      },
+      // MetaMask state
+      metaMaskAccount: null,
+      metaMaskConnected: false,
+      metaMaskChainId: null
     }
 
-    this.web3 = new Web3(new Web3.providers.HttpProvider(PROVIDER_URL))
+    // Initialize with read-only provider (Infura)
+    this.readOnlyWeb3 = new Web3(new Web3.providers.HttpProvider(PROVIDER_URL))
+    this.web3 = this.readOnlyWeb3
     this.contract = new this.web3.eth.Contract(Canteen.abi, this.state.contract)
+    this.contractAddress = CONTRACT_ADDRESS
 
     this.width = 960
     this.height = 500
@@ -272,29 +279,171 @@ class App extends Component {
       .call(this.updateLink.bind(this))
   }
 
+  async connectMetaMask() {
+    if (!window.ethereum) {
+      alert('MetaMask is not installed! Please install MetaMask to interact with the blockchain.')
+      return
+    }
+
+    try {
+      // Request account access
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+      
+      // Initialize Web3 with MetaMask provider
+      this.web3 = new Web3(window.ethereum)
+      this.contract = new this.web3.eth.Contract(Canteen.abi, this.contractAddress)
+      
+      this.setState({
+        metaMaskAccount: accounts[0],
+        metaMaskConnected: true,
+        metaMaskChainId: parseInt(chainId, 16)
+      })
+
+      // Check if on correct network (Sepolia = 11155111)
+      const expectedChainId = parseInt(process.env.REACT_APP_ETH_CHAIN_ID || '11155111')
+      if (parseInt(chainId, 16) !== expectedChainId) {
+        alert(`Please switch to Sepolia testnet (Chain ID: ${expectedChainId})`)
+      }
+
+      console.log('✅ MetaMask connected:', accounts[0])
+    } catch (error) {
+      console.error('❌ MetaMask connection failed:', error)
+      alert('Failed to connect to MetaMask: ' + error.message)
+    }
+  }
+
+  async disconnectMetaMask() {
+    // Switch back to read-only provider
+    this.web3 = this.readOnlyWeb3
+    this.contract = new this.web3.eth.Contract(Canteen.abi, this.contractAddress)
+    
+    this.setState({
+      metaMaskAccount: null,
+      metaMaskConnected: false,
+      metaMaskChainId: null
+    })
+  }
+
+  async registerNode() {
+    if (!this.state.metaMaskConnected) {
+      alert('Please connect MetaMask first!')
+      return
+    }
+
+    try {
+      // Get the node address from backend cluster API
+      const response = await fetch(this.CLUSTER_URL)
+      const clusterData = await response.json()
+      const nodeAddress = clusterData.host // Format: "IP:PORT"
+
+      console.log('Registering node:', nodeAddress)
+
+      // Check if user is the contract owner
+      const contractOwner = await this.contract.methods.owner().call()
+      if (this.state.metaMaskAccount.toLowerCase() !== contractOwner.toLowerCase()) {
+        alert('❌ Only the contract owner can register nodes.\n\nOwner: ' + contractOwner + '\nYour account: ' + this.state.metaMaskAccount)
+        return
+      }
+
+      await this.contract.methods.addMember(nodeAddress).send({
+        from: this.state.metaMaskAccount,
+        gas: 300000
+      })
+      
+      alert(`✅ Node registered successfully!\n\nNode: ${nodeAddress}\n\nThe backend will detect this in ~15 seconds and start scheduling containers.`)
+    } catch (error) {
+      console.error('❌ Registration failed:', error)
+      
+      // Check if already registered
+      if (error.message.includes('revert') || error.message.includes('already active')) {
+        alert('ℹ️ This node is already registered.\n\nYou can proceed to add/remove images.')
+      } else if (error.message.includes('owner')) {
+        alert('❌ Only the contract owner can register nodes.')
+      } else {
+        alert('Registration failed: ' + error.message)
+      }
+    }
+  }
+
   async addImage() {
+    if (!this.state.metaMaskConnected) {
+      alert('Please connect MetaMask first!')
+      return
+    }
+
     const imageName = this.state.image.add.imageName
     const reps = parseInt(this.state.image.add.num)
 
-    const account = (await this.web3.eth.getAccounts())[0]
-    await this.contract.methods.addImage(imageName, reps).send({from: account, gas: 5000000})
+    try {
+      await this.contract.methods.addImage(imageName, reps).send({
+        from: this.state.metaMaskAccount,
+        gas: 500000
+      })
+      alert('✅ Image added successfully!')
+    } catch (error) {
+      console.error('❌ Transaction failed:', error)
+      alert('Transaction failed: ' + error.message)
+    }
   }
 
   async removeImage() {
+    if (!this.state.metaMaskConnected) {
+      alert('Please connect MetaMask first!')
+      return
+    }
+
     const imageName = this.state.image.remove.imageName
 
-    const account = (await this.web3.eth.getAccounts())[0]
-    await this.contract.methods.removeImage(imageName).send({from: account, gas: 5000000})
+    try {
+      await this.contract.methods.removeImage(imageName).send({
+        from: this.state.metaMaskAccount,
+        gas: 500000
+      })
+      alert('✅ Image removed successfully!')
+    } catch (error) {
+      console.error('❌ Transaction failed:', error)
+      alert('Transaction failed: ' + error.message)
+    }
   }
 
   render() {
-    const {status, images, contract, nodes} = this.state
+    const {status, images, contract, nodes, metaMaskConnected, metaMaskAccount, metaMaskChainId} = this.state
 
     return (
       <Page>
         <Container>
           <Title>canteen.</Title>
           <Subtitle>A decentralized container orchestrator.</Subtitle>
+
+          {/* MetaMask Connection Section */}
+          <StatusContainer style={{backgroundColor: metaMaskConnected ? '#d4edda' : '#fff3cd'}}>
+            <StatusColumn style={{flex: 2}}>
+              <Label>🦊 MetaMask:</Label>
+              {metaMaskConnected ? (
+                <span>
+                  Connected: <code>{metaMaskAccount && metaMaskAccount.substring(0, 6)}...{metaMaskAccount && metaMaskAccount.substring(38)}</code>
+                  {metaMaskChainId && <span> (Chain: {metaMaskChainId})</span>}
+                </span>
+              ) : (
+                <span>Not connected (read-only mode)</span>
+              )}
+            </StatusColumn>
+            <FormColumn>
+              {metaMaskConnected ? (
+                <div>
+                  <button onClick={this.registerNode.bind(this)} style={{backgroundColor: '#28a745', color: 'white', fontWeight: 'bold', marginRight: '1em'}}>
+                    📝 Register Node
+                  </button>
+                  <button onClick={this.disconnectMetaMask.bind(this)}>Disconnect</button>
+                </div>
+              ) : (
+                <button onClick={this.connectMetaMask.bind(this)} style={{backgroundColor: '#f6851b', color: 'white', fontWeight: 'bold'}}>
+                  Connect MetaMask
+                </button>
+              )}
+            </FormColumn>
+          </StatusContainer>
 
           <StatusContainer>
             <StatusColumn><Label>status:</Label> {status}</StatusColumn>

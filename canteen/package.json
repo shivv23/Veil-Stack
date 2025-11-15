@@ -7,7 +7,12 @@
     "start": "node index.js",
     "deploy": "node deploy.js",
     "test": "truffle test",
-    "console": "truffle console"
+    "console": "truffle console",
+    "setup": "./setup-metamask.sh",
+    "compile": "truffle compile",
+    "migrate:sepolia": "truffle migrate --network sepolia",
+    "migrate:filecoin": "truffle migrate --network filecoin",
+    "migrate:dev": "truffle migrate --network development --reset"
   },
   "dependencies": {
     "@chainsafe/libp2p-gossipsub": "^13.0.0",
@@ -17,8 +22,10 @@
     "@libp2p/mdns": "^10.0.0",
     "@libp2p/mplex": "^10.0.0",
     "@libp2p/tcp": "^9.0.0",
+    "@truffle/hdwallet-provider": "^2.1.15",
     "bignumber.js": "^9.1.2",
     "dockerode": "^4.0.2",
+    "dotenv": "^16.6.1",
     "express": "^4.19.2",
     "helia": "^4.2.1",
     "libp2p": "^1.2.0",
