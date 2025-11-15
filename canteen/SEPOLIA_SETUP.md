@@ -2,13 +2,12 @@
 
 Your configuration is ready! Follow these steps to deploy on Sepolia testnet.
 
-## ✅ What's Configured
+## What's Needs to be Configured
 
-- **Infura API Key**: ecbbdfc3c066498882a52557f149c6a7
+- **Infura API Key**
 - **Network**: Ethereum Sepolia Testnet
-- **Backend .env**: Configured ✓
-- **Dashboard .env**: Configured ✓
-- **Truffle Config**: Updated with Sepolia network ✓
+- **Backend .env**
+- **Dashboard .env**
 
 ## 📋 Step-by-Step Deployment
 
@@ -21,15 +20,9 @@ Your configuration is ready! Follow these steps to deploy on Sepolia testnet.
 5. Enter your password
 6. **Copy the 12-word phrase**
 
-⚠️ **IMPORTANT**: Never share this phrase with anyone! Keep it secure.
-
 ### Step 2: Add Recovery Phrase to .env
 
 Edit `/home/harshit/coding/pldg/canteen/Veil-Stack/canteen/.env`:
-
-```bash
-nano .env
-```
 
 Find the line:
 ```env
@@ -41,8 +34,6 @@ Change it to (use your actual 12 words):
 MNEMONIC="word1 word2 word3 word4 word5 word6 word7 word8 word9 word10 word11 word12"
 ```
 
-Save and exit (Ctrl+X, Y, Enter)
-
 ### Step 3: Get Sepolia Test ETH
 
 You need test ETH to deploy the contract (around 0.1 ETH should be enough):
@@ -53,13 +44,7 @@ You need test ETH to deploy the contract (around 0.1 ETH should be enough):
 - Enter your MetaMask address
 - Request 0.5 ETH
 
-**Option 2: Alchemy Faucet**
-- Visit: https://sepoliafaucet.com/
-- Enter your MetaMask address
-- Complete the captcha
-- Request ETH
-
-**Option 3: QuickNode Faucet**
+**Option 2: QuickNode Faucet**
 - Visit: https://faucet.quicknode.com/ethereum/sepolia
 - Enter your MetaMask address
 - Request ETH
@@ -266,55 +251,20 @@ You've successfully deployed Canteen on Sepolia testnet!
 3. **View on blockchain**: Check transactions on Sepolia Etherscan
 4. **Monitor cluster**: `curl http://localhost:5001/cluster`
 
-## 🔍 Troubleshooting
-
-### "Insufficient funds"
-- Get more Sepolia ETH from faucets
-- Each transaction costs ~0.001-0.002 ETH
-
-### "Network not found"
-- Check MetaMask is on Sepolia network
-- Enable "Show test networks" in MetaMask settings
-
-### "Contract not deployed"
-- Verify contract address in both .env files
-- Check deployment succeeded: `npx truffle networks`
-
-### "Transaction failed"
-- Check gas price isn't too low
-- Verify you have enough ETH
-- Try increasing gas limit in truffle-config.js
-
-### Backend errors
-- Verify .env has correct contract address
-- Check RPC URL is accessible
-- Restart backend after .env changes
-
 ## 📚 Next Steps
 
-- **Add Token Gating**: Share your token contract for integration
-- **Deploy Multiple Nodes**: Run on different servers
-- **Monitor Gas Usage**: Track deployment costs
-- **Test Failure Scenarios**: Stop containers, test resilience
-
-## 🆘 Need Help?
-
-Check these docs:
-- [METAMASK_SETUP.md](METAMASK_SETUP.md) - Full setup guide
-- [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) - Complete checklist
-- [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
-
----
+- **Add Token Gating**
+- **Deploy Multiple Nodes**
+- **Monitor Gas Usage**
+- **Test Failure Scenarios**
 
 **Your Configuration Summary:**
 
 ```
 Network: Ethereum Sepolia Testnet
-RPC: https://sepolia.infura.io/v3/ecbbdfc3c066498882a52557f149c6a7
+RPC: https://sepolia.infura.io/v3/INFURA_API_KEY
 Chain ID: 11155111
-Contract: (to be deployed)
+Contract: (deployed address)
 Backend: http://localhost:5001
 Dashboard: http://localhost:3001
 ```
-
-**Ready to deploy? Start with Step 1!** 🚀
