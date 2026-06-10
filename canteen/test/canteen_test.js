@@ -1,5 +1,5 @@
+import { BN } from 'web3-utils';
 const Canteen = artifacts.require("Canteen");
-const web3Utils = require('web3-utils');
 
 contract('Canteen', accounts => {
   let canteen = null;
@@ -23,8 +23,8 @@ contract('Canteen', accounts => {
     const members = await canteen.getMembersCount();
     const images = await canteen.getImagesCount();
 
-    web3Utils.toBN(members).eq(web3Utils.toBN(0)).should.be.true;
-    web3Utils.toBN(images).eq(web3Utils.toBN(0)).should.be.true;
+    new BN(members).eq(new BN(0)).should.be.true;
+    new BN(images).eq(new BN(0)).should.be.true;
   });
 
   describe('Hosts and Images:', () => {
@@ -59,7 +59,7 @@ contract('Canteen', accounts => {
 
       await canteen.addImage("img2", 2);
       const images = await canteen.getImagesCount();
-      web3Utils.toBN(images).eq(web3Utils.toBN(2)).should.be.true;
+      new BN(images).eq(new BN(2)).should.be.true;
       details = await canteen.getMemberDetails("host1");
       details[0].should.be.equal("img2");
       details = await canteen.getMemberDetails("host3");
@@ -79,19 +79,19 @@ contract('Canteen', accounts => {
     it('test suite 1', async function() {
       await canteen.addImage("image1", 2);
       details = await canteen.getImageDetails("image1");
-      web3Utils.toBN(details[0]).eq(web3Utils.toBN(2)).should.be.true;
-      web3Utils.toBN(details[1]).eq(web3Utils.toBN(0)).should.be.true;
+      new BN(details[0]).eq(new BN(2)).should.be.true;
+      new BN(details[1]).eq(new BN(0)).should.be.true;
       details[2].should.be.equal(true);
 
       await canteen.addPortForImage("image1", 8080, 80);
       details = await canteen.getPortsForImage("image1");
-      web3Utils.toBN(details[0][0]).eq(web3Utils.toBN(8080)).should.be.true;
-      web3Utils.toBN(details[0][1]).eq(web3Utils.toBN(80)).should.be.true;
+      new BN(details[0][0]).eq(new BN(8080)).should.be.true;
+      new BN(details[0][1]).eq(new BN(80)).should.be.true;
 
       await canteen.addPortForImage("image1", 5000, 50);
       details = await canteen.getPortsForImage("image1");
-      web3Utils.toBN(details[1][0]).eq(web3Utils.toBN(5000)).should.be.true;
-      web3Utils.toBN(details[1][1]).eq(web3Utils.toBN(50)).should.be.true;
+      new BN(details[1][0]).eq(new BN(5000)).should.be.true;
+      new BN(details[1][1]).eq(new BN(50)).should.be.true;
     });
   });
 });
