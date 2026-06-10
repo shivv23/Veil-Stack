@@ -16,7 +16,7 @@ module.exports = {
         mnemonic: {
           phrase: process.env.MNEMONIC
         },
-        providerOrUrl: process.env.ETH_RPC_URL || 'https://sepolia.infura.io/v3/ecbbdfc3c066498882a52557f149c6a7',
+        providerOrUrl: process.env.ETH_RPC_URL,
         pollingInterval: 15000, // Increase polling interval
         chainId: 11155111
       }),
