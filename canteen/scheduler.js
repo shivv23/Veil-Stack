@@ -265,21 +265,45 @@ class CanteenScheduler {
 
           let container
           if (!containerStatus) {
-            // Create a new container if not exist.
+            // Detect ports from contract mappings or Docker image metadata
+            let ports = []
+            try {
+              const contractPorts = await this.contract.methods.getPortsForImage(scheduledImage).call()
+              if (contractPorts && contractPorts.length > 0) {
+                ports = contractPorts.map(p => ({ host: p[0], container: p[1] }))
+                console.log(`📋 Using port mapping from contract: ${JSON.stringify(ports)}`)
+              }
+            } catch (_) {}
+            if (ports.length === 0) {
+              try {
+                const imageInfo = await this.docker.getImage(scheduledImage).inspect()
+                const exposed = imageInfo.ContainerConfig?.ExposedPorts || imageInfo.Config?.ExposedPorts || {}
+                ports = Object.keys(exposed).map(p => {
+                  const num = parseInt(p.split('/')[0])
+                  return { host: num, container: num }
+                })
+                if (ports.length > 0) {
+                  console.log(`📋 Detected ports from image metadata: ${JSON.stringify(ports)}`)
+                }
+              } catch (_) {}
+            }
+            if (ports.length === 0) {
+              ports = [{ host: 8080, container: 8080 }]
+              console.log(`⚠️  No port info found for '${scheduledImage}', defaulting to 8080`)
+            }
 
-            const port = scheduledImage.includes("hello-world") ? 8000 : 8080;
+            const exposedPorts = {}
+            const portBindings = {}
+            for (const p of ports) {
+              exposedPorts[`${p.container}/tcp`] = {}
+              portBindings[`${p.container}/tcp`] = [{ HostPort: `${p.host}` }]
+            }
 
             container = await this.docker.createContainer({
               Image: scheduledImage,
-              ExposedPorts: {
-                [`${port}/tcp`]: {},
-
-              },
+              ExposedPorts: exposedPorts,
               HostConfig: {
-                // ExposeAllPorts: true,
-                PortBindings: {
-                  [`${port}/tcp`]: [{HostPort: `${port}`}],
-                }
+                PortBindings: portBindings,
               }
             })
 

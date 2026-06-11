@@ -202,6 +202,10 @@ contract Canteen {
         return members.length;
     }
 
+    function getImages() public view returns (string[] memory) {
+        return images;
+    }
+
     function getImagesCount() public view returns (uint) {
         return images.length;
     }
