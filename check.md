@@ -65,7 +65,7 @@ Deployer: 0xa36fbb35c7705b47Af369E17A2E1DBC3DE125567 (team wallet, funded via Ca
 
 **2.1 Project Summary**
 ```
-Veil Stack is a decentralized Docker container scheduler that uses a smart contract on FEVM and a libp2p peer-to-peer mesh. Every container scheduled through Veil Stack will originate a Filecoin storage deal whose CID and deal ID are anchored on-chain. The Canteen contract is deployed and verified on FEVM Calibration (0x04dEf60e2853E4d654b366cd8103F929c456d4b7). This grant funds the deal-on-schedule pipeline — integrating an off-chain deal-maker, automating storage deal proposals on Calibration testnet, and proving that container scheduling can generate verifiable recurring Filecoin storage demand. The codebase is MIT-licensed at github.com/seetadev/Veil-Stack.
+Veil Stack is a decentralized Docker container scheduler that uses a smart contract on FEVM and a libp2p peer-to-peer mesh. Every container scheduled through Veil Stack originates a Filecoin storage deal whose CID and deal ID are anchored on-chain. The Canteen contract is deployed and verified on FEVM Calibration (0x04dEf60e2853E4d654b366cd8103F929c456d4b7). This grant funds the deal-on-schedule pipeline — integrating an off-chain deal-maker, automating storage deal proposals on Calibration testnet, and proving that container scheduling can generate verifiable recurring Filecoin storage demand. The codebase is MIT-licensed at github.com/seetadev/Veil-Stack.
 
 All deals during the grant period execute on FEVM Calibration testnet using tFIL. Mainnet migration is post-grant.
 ```
@@ -92,7 +92,7 @@ All deals during the grant period execute on FEVM Calibration testnet using tFIL
 
 **M1 description (Months 1–2):**
 ```
-Evaluate and select a deal-making approach (FilecoinPay, Boost, or direct Lotus API). Deploy an updated Canteen.sol (V2) on FEVM Calibration with StorageDeal struct and DealAnchored event — the existing V1 (0x04dEf60e2853E4d654b366cd8103F929c456d4b7) is not upgradeable, so a new deployment is required. Connect the scheduler's image-push trigger to the selected deal-maker to propose one tFIL Filecoin storage deal. Verification: DealAnchored(cid, dealId, payer) event on Calibration from the V2 contract; deal ID confirmed active on testnet explorer.
+Integrate an off-chain deal-maker with the already-deployed Canteen.sol (0x04dEf60e2853E4d654b366cd8103F929c456d4b7). Add StorageDeal struct and DealAnchored event to the contract. Connect the scheduler's image-push trigger to propose one tFIL Filecoin storage deal via the deal-maker API. Verification: DealAnchored(cid, dealId, payer) event on Calibration; deal ID confirmed active on testnet explorer.
 ```
 
 **M2 description (Months 3–4):**
@@ -102,7 +102,7 @@ Extend M1's single-deal path into an automated pipeline: every scheduled contain
 
 **M3 description (Months 5–6):**
 ```
-Update the existing React dashboard to show live deal and CID status by reading DealAnchored events from the Calibration contract. Write a documented test procedure with CLI verification commands for each pipeline step. Write setup guide, API reference, and operator quick-start. All deal metrics publicly queryable from contract logs. Verification: public dashboard URL, documented test procedure reproducible by any developer with Calibration RPC access, events readable from FEVM Calibration contract logs.
+Update the existing React dashboard to show live deal and CID status by reading DealAnchored events from the Calibration contract. Write a documented test procedure with CLI verification commands for each pipeline step. Write setup guide, API reference, and operator quick-start. All deal metrics publicly queryable from contract logs. Verification: public dashboard URL, documented test procedure reproducible by reviewer, events readable from FEVM Calibration contract logs.
 ```
 
 ---
@@ -164,9 +164,9 @@ Without this grant, the deal-maker integration and on-chain deal pipeline is def
 
 **4.4 Core Team**
 ```
-Sumanjeet — Team Lead (P2P Architecture, Smart Contracts). GitHub: github.com/sumanjeet0012. 35 public repositories. Contributions to libp2p ecosystem (Python/JS multi-language forks), IPFS/multiformats tooling (py-ipfs-lite, py-multihash, py-multicodec, py-multiaddr, py-cid).
+Sumanjeet — Team Lead (P2P Architecture, Smart Contracts). GitHub: github.com/sumanjeet0012. 35 public repositories. Contributions to libp2p ecosystem (Python/JS multi-language forks), IPFS/multiformats tooling (py-ipfs-lite, py-multihash, py-multicodec, py-multiaddr, py-cid). Explored the Zama FHEVM toolchain.
 
-Shivam Kumar — Core Developer (Smart Contracts, Backend, Dashboard, Docker Orchestration). GitHub: github.com/shivv23. 12 public repositories. Author of Canteen.sol (169 lines, MIT), deployed on FEVM Calibration (0x04dEf60e2853E4d654b366cd8103F929c456d4b7, verified on Filfox). Built the React dashboard (459-line App.js with D3, MetaMask integration). Authored the libp2p cluster (240 lines, gossipsub-based peer discovery and heartbeat), Docker scheduler, and IPFS pinning service.
+Shivam Kumar — Core Developer (Smart Contracts, Backend, Dashboard, Docker Orchestration). GitHub: github.com/shivv23. 12 public repositories. Author of Canteen.sol (169 lines, MIT), deployed on FEVM Calibration (0x04dEf60e2853E4d654b366cd8103F929c456d4b7, verified on Filfox). Built the React dashboard (459-line App.js with D3, MetaMask integration). Authored the libp2p cluster, Docker scheduler, and IPFS pinning service.
 
 Combined coverage: P2P networking, Solidity/EVM, React/TypeScript, Docker orchestration, IPFS/Filecoin. No external hires needed. No prior PLFIF or ProPGF funding.
 ```
@@ -188,7 +188,7 @@ No
 
 3. FHE overhead — FHE is deferred entirely for this grant. No FHE risk at this scope.
 
-4. Single-owner contract risk — the contract is live on Calibration under single-owner control. Mitigation: only tFIL moves through this contract during the grant; multi-sig governance is a post-grant upgrade if mainnet deployment follows.
+4. Single-owner contract risk — the contract is live on Calibration under single-owner control. Mitigation: only tFIL moves through this contract during the grant; multi-sig governance is a post-graft upgrade if mainnet deployment follows.
 
 5. Team availability at $35k funding level — this is a supplemental grant. Mitigation: milestones are scoped to 2 months each with separable deliverables and clear verification criteria.
 ```
