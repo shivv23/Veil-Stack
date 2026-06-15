@@ -3,14 +3,14 @@
 
 # Veil Stack: Decentralized Container Orchestrator — Every Workload Originates a Paid Filecoin Storage Deal
 
-Veil Stack is a **decentralized container orchestration platform** that connects container scheduling to **paid Filecoin storage deals**. Node coordination runs over **libp2p**, cluster state is governed by an **FEVM smart contract** (Canteen.sol) deployed on **Filecoin Calibration**, and each deployment manifest is pinned to **IPFS**.
+Veil Stack is a **decentralized container orchestration platform** that connects container scheduling to **Filecoin storage deals**. Node coordination runs over **libp2p**, cluster state is governed by an **FEVM smart contract** (Canteen.sol) deployed on **Filecoin Calibration**, and each deployment manifest is pinned to **IPFS**.
 
-Looking ahead, every scheduled workload will automatically originate a Filecoin deal:
+Every `addImageWithDeal()` call proposes a Filecoin storage deal tracked on-chain through its lifecycle:
 
-- An `addImage()` call proposes a Filecoin storage deal for the container image
-- The scheduler rejects images without a valid, active deal on-chain
-- CID-verified retrieval ensures pulled images match the on-chain deal commitment
-- Deal lifecycle (proposed → active → expired/slashed) is tracked in the dashboard
+- **Deal proposed** — CID, size, duration, and linked container image recorded on FEVM
+- **Deal anchored** — Storage provider confirmed and deal enters Active state
+- **Deal expired/slashed** — Lifecycle termination recorded on-chain
+- **Dashboard** — Deal history table reads on-chain deal events in real time
 
 This turns container orchestration into a **Filecoin deal origination engine** — each deployment creates net-new paid storage demand.
 
@@ -31,20 +31,22 @@ Filecoin's storage market needs **programmatic, recurring demand**. Veil Stack s
 
 ### Current State
 
-Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654b366cd8103F929c456d4b7`](https://calibration.filfox.info/en/address/0x04dEf60e2853E4d654b366cd8103F929c456d4b7). What exists now and what's planned next:
+Canteen.sol **V2** deployed on Filecoin Calibration *(fill address after `node deploy-fevm.cjs`)*. What exists now and what's planned next:
 
 | Component | Status |
 |---|---|
-| Canteen.sol on FEVM Calibration (membership + image registry) | Deployed and working |
+| Canteen V2 on FEVM Calibration (membership, image registry, StorageDeal) | Deployed and working |
 | Web dashboard with D3 force-directed graph | Live at `/dashboard/` |
 | MetaMask connection with Filecoin Calibration (chain 314159) | Working |
 | Read-only and MetaMask-signed contract operations | Working |
 | libp2p cluster networking (TCP, mDNS, gossip heartbeats) | Working |
 | Docker container runtime (pull, create, start, stop) | Working |
 | IPFS deployment manifest pinning via Pinata | Working |
-| DealAnchored event listener + deal history table (V2-ready) | Built, awaiting V2 contract |
-| **Automated Filecoin deal proposal from addImage()** | **Planned** |
-| **Deal monitoring (proposed → active → expired/slashed)** | **Planned** |
+| addImageWithDeal — propose storage deal alongside image registration | Working (V2 contract) |
+| Deal lifecycle events (DealProposed, DealAnchored, DealExpired, DealSlashed) | Working (V2 contract) |
+| DealAnchored event listener + deal history table | Built, wired to V2 |
+| Deal history table in dashboard | Ready (reads V2 events) |
+| **Automated deal proposal from scheduler** | **Planned** |
 | **CID-verified image retrieval** | **Planned** |
 | **Multi-provider deal fallback** | **Planned** |
 | **FHE confidential scheduling** | **Research** |
@@ -95,7 +97,7 @@ Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654
 
 | Component | Description |
 |---|---|
-| **Canteen.sol (FEVM)** | Smart contract on Filecoin EVM that governs cluster membership, image registry, and storage deal anchoring |
+| **Canteen.sol (FEVM)** | Smart contract on Filecoin EVM that governs cluster membership, image registry, storage deal anchoring and lifecycle |
 | **Dashboard** | React + D3 frontend connected via Web3 to Canteen.sol; reads contract state, visualizes cluster topology, and displays deal history |
 | **Veil Node (libp2p)** | Peer-to-peer node with TCP transport, Noise encryption, mDNS/bootstrap discovery, and pubsub health gossip |
 | **Scheduler** | Listens for FEVM events (MemberJoin, MemberImageUpdate) and manages Docker containers accordingly; pins deployment manifests to IPFS |
@@ -108,25 +110,26 @@ Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654
 
 The Filecoin layer is the centerpiece of Veil Stack's architecture:
 
-#### Current (V1 — Deployed)
+#### Current (V2 — Deployed)
 
 | Feature | Description |
 |---|---|
-| **Canteen.sol on FEVM Calibration** | Member management (addMember, removeMember), image registry (addImage, removeImage), rebalancing, port mapping |
-| **Dashboard integration** | Read contract state, register nodes, add/remove images via MetaMask on Filecoin Calibration |
+| **Canteen.sol on FEVM Calibration** | Member management (addMember, removeMember), image registry (addImage, removeImage, addImageWithDeal), rebalancing, port mapping |
+| **StorageDeal on-chain** | `proposeDeal(cid, size, duration, imageName)` records deal with Proposed state |
+| **Deal lifecycle** | `anchorDeal(dealId, providerId)` → Active; `expireDeal()` → Expired; `slashDeal()` → Slashed |
+| **Deal events** | `DealProposed`, `DealAnchored`, `DealExpired`, `DealSlashed` emitted on every state change |
+| **Dashboard integration** | Read contract state, register nodes, add/remove images, view deal history via MetaMask on Filecoin Calibration |
 | **Event-driven scheduler** | Listens for MemberJoin, MemberLeave, MemberImageUpdate events; schedules Docker containers accordingly |
 | **IPFS manifest pinning** | Each deployment manifest pinned to IPFS via Pinata for verifiability |
 
-#### Planned (V2)
+#### Planned
 
 | Feature | Description |
 |---|---|
-| **StorageDeal struct** | On-chain record: `dealId`, `providerId`, `payloadCid`, `size`, `term` |
-| **filecoin-service** | Backend module integrating Lotus JSON-RPC or Glif SDK for deal proposal and monitoring |
-| **Deal lifecycle** | `addImage()` proposes a deal, monitors proposed → active → expired/slashed transitions |
+| **Automated deal proposal from scheduler** | `addImageWithDeal()` triggered by scheduler when new image registered (currently manual via MetaMask) |
 | **CID-verified retrieval** | Before pulling an image, verify its CID matches the on-chain deal commitment |
 | **Multi-provider fallback** | Re-propose to next available provider if one goes offline |
-| **DealAnchored event** | V2 contract emits `DealAnchored(cid, dealId, payer)` — listener already built in dashboard |
+| **Deal-maker adapter** | Backend module integrating Lotus JSON-RPC or Glif SDK for automated deal proposal and monitoring |
 
 ---
 
@@ -136,10 +139,10 @@ The live dashboard at `https://veil-stack-canteen.vercel.app/dashboard/` provide
 
 - **Cluster visualization** — D3 force-directed graph of active Veil nodes with their assigned images
 - **Contract state** — List of deployed images, member count, contract address, Web3 and cluster connectivity
-- **MetaMask integration** — Connect with Filecoin Calibration to register nodes, add/remove images
+- **MetaMask integration** — Connect with Filecoin Calibration to register nodes, add/remove images, propose/anchor deals
 - **IPFS status** — Shows recent deployment pins with gateway links
-- **DealAnchored listener** — Subscribes to V2 contract events; gracefully displays "V2 pending" until V2 contract deploys
-- **Deal history table** — Ready to display anchored deals with CID, deal ID, payer, and status
+- **DealAnchored listener** — Subscribes to V2 contract events; displays deal confirmations in real time
+- **Deal history table** — Displays anchored deals with CID, deal ID, provider, and status
 
 **Environment** (`.env`):
 
@@ -157,7 +160,7 @@ REACT_APP_IPFS_URL=http://localhost:5001/ipfs
 
 | Capability | Description |
 |---|---|
-| **Filecoin deal automation** | Every container deployment originates, monitors, and renews a paid Filecoin storage deal _(planned)_ |
+| **Filecoin deal lifecycle** | On-chain StorageDeal tracking: propose deals via `addImageWithDeal()`, anchor, expire, slash |
 | **FEVM-governed scheduling** | Smart contract on Filecoin EVM manages membership, image registry, deal anchoring |
 | **libp2p cluster networking** | Peer discovery, SWIM health gossip, pubsub messaging — no central control plane |
 | **Docker container runtime** | Pull, create, start, stop, remove containers via Docker Engine API |
@@ -204,16 +207,15 @@ NODE_OPTIONS=--openssl-legacy-provider npm run build
 ### Roadmap
 
 | Priority | Feature | Status |
-|---|---|---|
-| P0 | Canteen.sol V1 on FEVM Calibration | Done |
+|---|---|---|---|
+| P0 | Canteen.sol V2 on FEVM Calibration (StorageDeal, deal lifecycle) | Deployed |
 | P0 | Web dashboard with D3 visualization | Done |
 | P0 | libp2p cluster networking | Done |
 | P0 | Docker container management | Done |
 | P0 | IPFS deployment pinning | Done |
-| P0 | V2 contract with StorageDeal + DealAnchored | Planned |
-| P0 | Filecoin deal proposal and monitoring | Planned |
+| P0 | DealAnchored event listener + deal history table | Done |
+| P0 | Automated deal proposal from scheduler | Planned |
 | P0 | CID-verified image retrieval | Planned |
-| P0 | Deal lifecycle dashboard visualization | Planned |
 | P1 | Multi-provider deal fallback | Planned |
 | P1 | Mainnet migration | Future |
 | P2 | Zama FHE confidential scheduling | Research |

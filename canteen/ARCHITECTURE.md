@@ -21,9 +21,9 @@
 │                      BLOCKCHAIN LAYER                          │
 │                                                                │
 │  ┌─────────────────┐         ┌─────────────────┐               │
-│  │   Ethereum      │         │   Filecoin      │               │
-│  │   Sepolia       │         │   Calibration   │               │
-│  │   (Testnet)     │         │   (Testnet)     │               │
+│  │   Filecoin      │         │   Ethereum      │               │
+│  │   Calibration   │         │   Sepolia       │               │
+│  │   (default)     │         │   (optional)    │               │
 │  └────────┬────────┘         └────────┬────────┘               │
 │           │                           │                        │
 │      ┌────▼──────────────────────────▼─────┐                   │
@@ -176,11 +176,11 @@ Container running!
                     │  Chain Selector  │
                     └────┬────────┬────┘
                          │        │
-              Ethereum   │        │   Filecoin
+               Filecoin   │        │   Ethereum
                          │        │
           ┌──────────────▼───┐ ┌─▼──────────────┐
-          │  Ethereum Node   │ │  Filecoin Node │
-          │  (Sepolia)       │ │  (Calibration) │
+          │  Filecoin Node   │ │  Ethereum Node │
+          │  (Calibration)   │ │  (Sepolia)     │
           └──────────────────┘ └────────────────┘
                          │        │
           ┌──────────────▼───┐ ┌─▼──────────────┐

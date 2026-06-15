@@ -1,35 +1,67 @@
 version: "3.8"
 
 services:
-  # Local Ethereum node (for dev/test clouds)
+  # Local Ethereum node (for dev/test clouds — start with --profile dev)
   ganache:
     image: trufflesuite/ganache:latest
     command: --wallet.totalAccounts 10 --wallet.defaultBalance 1000 --port 8545
+    profiles:
+      - dev
     ports:
       - "8545:8545"
     networks:
       - veil-net
 
-  # Canteen backend node
+  # Docker socket proxy — exposes a restricted subset of the Docker API over TCP
+  # so that canteen never holds a raw RW socket. Policy is set via env vars below.
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    environment:
+      - CONTAINERS=1
+      - IMAGES=1
+      - NETWORKS=0
+      - VOLUMES=0
+      - EXEC=0
+      - INFO=0
+      - AUTH=0
+      - SECRETS=0
+      - BUILD=0
+      - COMMIT=0
+      - CONFIGS=0
+      - DISTRIBUTION=0
+      - GRPC=0
+      - NODES=0
+      - PLUGINS=0
+      - SERVICES=0
+      - SESSION=0
+      - SWARM=0
+      - SYSTEM=0
+      - TASKS=0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - veil-net
+    restart: unless-stopped
+
+  # Canteen backend node — connects to Docker via socket-proxy, not direct socket
   canteen-node-1:
     build:
       context: ./canteen
       dockerfile: Dockerfile
     depends_on:
-      - ganache
+      - socket-proxy
     environment:
-      - ACTIVE_CHAIN=ethereum
-      - ETH_RPC_URL=http://ganache:8545
-      - ETH_CONTRACT_ADDRESS=
+      - ACTIVE_CHAIN=filecoin
+      - FIL_RPC_URL=https://api.calibration.node.glif.io/rpc/v1
+      # TODO: Fill after V2 deploy
+      - FIL_CONTRACT_ADDRESS=
       - PORT=5000
       - WEB_PORT=5001
       - NODE_ENV=development
-      - DOCKER_SOCKET=/var/run/docker.sock
+      - DOCKER_HOST=tcp://socket-proxy:2375
     ports:
       - "5000:5000"
       - "5001:5001"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - veil-net
 
@@ -42,7 +74,10 @@ services:
       - canteen-node-1
     environment:
       - REACT_APP_CLUSTER_URL=http://canteen-node-1:5001/cluster
-      - REACT_APP_ETH_RPC_URL=http://ganache:8545
+      - REACT_APP_FIL_RPC_URL=https://api.calibration.node.glif.io/rpc/v1
+      # TODO: Fill after V2 deploy
+      - REACT_APP_FIL_CONTRACT_ADDRESS=
+      - REACT_APP_FIL_CHAIN_ID=314159
     ports:
       - "3000:3000"
     networks:
