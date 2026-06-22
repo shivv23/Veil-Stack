@@ -94,4 +94,74 @@ contract('Canteen', accounts => {
       new BN(details[1][1]).eq(new BN(50)).should.be.true;
     });
   });
+
+  describe('Access Control:', () => {
+    it('rejects non-owner addMember', async function() {
+      try {
+        await canteen.addMember("unauthorized", { from: purchaser });
+        assert.fail('Should have thrown');
+      } catch (e) {
+        assert(e.message.includes('revert'), 'Expected revert');
+      }
+    });
+
+    it('rejects non-owner addImage', async function() {
+      try {
+        await canteen.addImage("img", 1, { from: purchaser });
+        assert.fail('Should have thrown');
+      } catch (e) {
+        assert(e.message.includes('revert'), 'Expected revert');
+      }
+    });
+  });
+
+  describe('Input Validation:', () => {
+    it('rejects empty image name', async function() {
+      try {
+        await canteen.addImage("", 1);
+        assert.fail('Should have thrown');
+      } catch (e) {
+        assert(e.message.includes('revert'), 'Expected revert for empty name');
+      }
+    });
+
+    it('rejects zero replicas', async function() {
+      try {
+        await canteen.addImage("img", 0);
+        assert.fail('Should have thrown');
+      } catch (e) {
+        assert(e.message.includes('revert'), 'Expected revert for zero replicas');
+      }
+    });
+
+    it('rejects duplicate member registration', async function() {
+      await canteen.addMember("host1");
+      try {
+        await canteen.addMember("host1");
+        assert.fail('Should have thrown');
+      } catch (e) {
+        assert(e.message.includes('revert'), 'Expected revert for duplicate member');
+      }
+    });
+  });
+
+  describe('View Functions:', () => {
+    it('getImages returns registered images', async function() {
+      await canteen.addMember("host1");
+      await canteen.addImage("alpha", 1);
+      await canteen.addImage("beta", 2);
+      const images = await canteen.getImages();
+      assert(images.includes("alpha"), 'alpha should be in images');
+      assert(images.includes("beta"), 'beta should be in images');
+      assert.equal(images.length, 2, 'Should have 2 images');
+    });
+
+    it('getImagesCount returns correct count', async function() {
+      const count0 = await canteen.getImagesCount();
+      new BN(count0).eq(new BN(0)).should.be.true;
+      await canteen.addImage("x", 1);
+      const count1 = await canteen.getImagesCount();
+      new BN(count1).eq(new BN(1)).should.be.true;
+    });
+  });
 });
