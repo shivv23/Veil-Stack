@@ -22,7 +22,7 @@ Filecoin's storage market needs **programmatic, recurring demand**. Veil Stack s
 
 | Problem | Veil Stack Solution |
 |---|---|
-| Filecoin deals are mostly manual, one-off | Every container deployment **automatically** proposes, monitors, and renews deals |
+| Filecoin deals are mostly manual, one-off | Every container deployment **is designed to** automatically propose, monitor, and renew deals |
 | FEVM is underutilized beyond simple storage contracts | Canteen.sol on FEVM proves real-time scheduling logic on Filecoin |
 | Decentralized cloud lacks a verifiable storage substrate | IPFS CID pinning + Filecoin deal anchoring = tamper-evident image delivery |
 | Multi-organization clusters need trust-minimized coordination | libp2p federation + FEVM governance enable cross-org clusters |
@@ -157,14 +157,14 @@ REACT_APP_IPFS_URL=http://localhost:5001/ipfs
 
 | Capability | Description |
 |---|---|
-| **Filecoin deal automation** | Every container deployment originates, monitors, and renews a paid Filecoin storage deal |
+| **Filecoin deal automation** | Every container deployment originates, monitors, and renews a paid Filecoin storage deal _(planned)_ |
 | **FEVM-governed scheduling** | Smart contract on Filecoin EVM manages membership, image registry, deal anchoring |
 | **libp2p cluster networking** | Peer discovery, SWIM health gossip, pubsub messaging — no central control plane |
 | **Docker container runtime** | Pull, create, start, stop, remove containers via Docker Engine API |
 | **React + D3 dashboard** | Web3-connected, Filecoin Calibration-native, token-gated |
 | **IPFS deployment pinning** | Verifiable deployment manifest storage via Pinata |
-| **CID-verified retrieval** | Tamper-evident image pulling with on-chain deal commitment verification |
-| **Multi-provider deal fallback** | Automatic re-proposal if a storage provider goes offline |
+| **CID-verified retrieval** | Tamper-evident image pulling with on-chain deal commitment verification _(planned)_ |
+| **Multi-provider deal fallback** | Automatic re-proposal if a storage provider goes offline _(planned)_ |
 
 ---
 
