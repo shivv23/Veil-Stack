@@ -1,10 +1,11 @@
-## Veil Stack: Decentralized Container Orchestrator — Every Workload Originates a Paid Filecoin Storage Deal
+[![Live Dashboard](https://img.shields.io/badge/Live-Dashboard-0090FF)](https://veil-stack-canteen.vercel.app/dashboard/)
+[![FEVM Calibration](https://img.shields.io/badge/FEVM-Calibration-42A5F5)](https://calibration.filfox.info/en/address/0x04dEf60e2853E4d654b366cd8103F929c456d4b7)
 
-> **FIL-ProPGF Batch 3** — This project has submitted a $30k, 6-month grant to build the automated Filecoin deal pipeline for container deployments. [Live Dashboard](https://veil-stack-canteen.vercel.app/dashboard/)
+# Veil Stack: Decentralized Container Orchestrator — Every Workload Originates a Paid Filecoin Storage Deal
 
 Veil Stack is a **decentralized container orchestration platform** that connects container scheduling to **paid Filecoin storage deals**. Node coordination runs over **libp2p**, cluster state is governed by an **FEVM smart contract** (Canteen.sol) deployed on **Filecoin Calibration**, and each deployment manifest is pinned to **IPFS**.
 
-In the post-grant vision, every scheduled workload automatically originates a Filecoin deal:
+Looking ahead, every scheduled workload will automatically originate a Filecoin deal:
 
 - An `addImage()` call proposes a Filecoin storage deal for the container image
 - The scheduler rejects images without a valid, active deal on-chain
@@ -30,7 +31,7 @@ Filecoin's storage market needs **programmatic, recurring demand**. Veil Stack s
 
 ### Current State
 
-Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654b366cd8103F929c456d4b7`](https://calibration.filfox.info/en/address/0x04dEf60e2853E4d654b366cd8103F929c456d4b7). What exists now and what the FIL-ProPGF grant will fund:
+Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654b366cd8103F929c456d4b7`](https://calibration.filfox.info/en/address/0x04dEf60e2853E4d654b366cd8103F929c456d4b7). What exists now and what's planned next:
 
 | Component | Status |
 |---|---|
@@ -42,11 +43,11 @@ Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654
 | Docker container runtime (pull, create, start, stop) | Working |
 | IPFS deployment manifest pinning via Pinata | Working |
 | DealAnchored event listener + deal history table (V2-ready) | Built, awaiting V2 contract |
-| **Automated Filecoin deal proposal from addImage()** | **Grant scope** |
-| **Deal monitoring (proposed → active → expired/slashed)** | **Grant scope** |
-| **CID-verified image retrieval** | **Grant scope** |
-| **Multi-provider deal fallback** | **Grant scope** |
-| **FHE confidential scheduling** | **Future exploration** |
+| **Automated Filecoin deal proposal from addImage()** | **Planned** |
+| **Deal monitoring (proposed → active → expired/slashed)** | **Planned** |
+| **CID-verified image retrieval** | **Planned** |
+| **Multi-provider deal fallback** | **Planned** |
+| **FHE confidential scheduling** | **Research** |
 
 ---
 
@@ -99,7 +100,7 @@ Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654
 | **Veil Node (libp2p)** | Peer-to-peer node with TCP transport, Noise encryption, mDNS/bootstrap discovery, and pubsub health gossip |
 | **Scheduler** | Listens for FEVM events (MemberJoin, MemberImageUpdate) and manages Docker containers accordingly; pins deployment manifests to IPFS |
 | **IPFS Service** | Pins deployment manifests to IPFS via Pinata, providing verifiable deployment records |
-| **Filecoin Network** | Target chain for FEVM contract and Filecoin deal origination (Calibration testnet now, mainnet after grant) |
+| **Filecoin Network** | Target chain for FEVM contract and Filecoin deal origination (Calibration testnet now, mainnet migration planned) |
 
 ---
 
@@ -116,7 +117,7 @@ The Filecoin layer is the centerpiece of Veil Stack's architecture:
 | **Event-driven scheduler** | Listens for MemberJoin, MemberLeave, MemberImageUpdate events; schedules Docker containers accordingly |
 | **IPFS manifest pinning** | Each deployment manifest pinned to IPFS via Pinata for verifiability |
 
-#### Grant Scope (V2)
+#### Planned (V2)
 
 | Feature | Description |
 |---|---|
@@ -137,7 +138,7 @@ The live dashboard at `https://veil-stack-canteen.vercel.app/dashboard/` provide
 - **Contract state** — List of deployed images, member count, contract address, Web3 and cluster connectivity
 - **MetaMask integration** — Connect with Filecoin Calibration to register nodes, add/remove images
 - **IPFS status** — Shows recent deployment pins with gateway links
-- **DealAnchored listener** — Subscribes to V2 contract events; gracefully displays "V2 pending" until grant contract deploys
+- **DealAnchored listener** — Subscribes to V2 contract events; gracefully displays "V2 pending" until V2 contract deploys
 - **Deal history table** — Ready to display anchored deals with CID, deal ID, payer, and status
 
 **Environment** (`.env`):
@@ -156,14 +157,14 @@ REACT_APP_IPFS_URL=http://localhost:5001/ipfs
 
 | Capability | Description |
 |---|---|
-| **Filecoin deal automation** | Every container deployment originates, monitors, and renews a paid Filecoin storage deal *(grant scope)* |
+| **Filecoin deal automation** | Every container deployment originates, monitors, and renews a paid Filecoin storage deal |
 | **FEVM-governed scheduling** | Smart contract on Filecoin EVM manages membership, image registry, deal anchoring |
 | **libp2p cluster networking** | Peer discovery, SWIM health gossip, pubsub messaging — no central control plane |
 | **Docker container runtime** | Pull, create, start, stop, remove containers via Docker Engine API |
 | **React + D3 dashboard** | Web3-connected, Filecoin Calibration-native, token-gated |
 | **IPFS deployment pinning** | Verifiable deployment manifest storage via Pinata |
-| **CID-verified retrieval** | Tamper-evident image pulling with on-chain deal commitment verification *(grant scope)* |
-| **Multi-provider deal fallback** | Automatic re-proposal if a storage provider goes offline *(grant scope)* |
+| **CID-verified retrieval** | Tamper-evident image pulling with on-chain deal commitment verification |
+| **Multi-provider deal fallback** | Automatic re-proposal if a storage provider goes offline |
 
 ---
 
@@ -209,12 +210,12 @@ NODE_OPTIONS=--openssl-legacy-provider npm run build
 | P0 | libp2p cluster networking | Done |
 | P0 | Docker container management | Done |
 | P0 | IPFS deployment pinning | Done |
-| P0 | V2 contract with StorageDeal + DealAnchored | Grant scope (M1) |
-| P0 | Filecoin deal proposal and monitoring | Grant scope (M1-M2) |
-| P0 | CID-verified image retrieval | Grant scope (M2) |
-| P0 | Deal lifecycle dashboard visualization | Grant scope (M2-M3) |
-| P1 | Multi-provider deal fallback | Grant scope (M3) |
-| P1 | Mainnet migration | Post-grant |
+| P0 | V2 contract with StorageDeal + DealAnchored | Planned |
+| P0 | Filecoin deal proposal and monitoring | Planned |
+| P0 | CID-verified image retrieval | Planned |
+| P0 | Deal lifecycle dashboard visualization | Planned |
+| P1 | Multi-provider deal fallback | Planned |
+| P1 | Mainnet migration | Future |
 | P2 | Zama FHE confidential scheduling | Research |
 | P2 | 10-node cluster CI + federation model | Research |
 | P3 | Security audit | Planned |
