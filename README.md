@@ -1,271 +1,227 @@
-## **Veil Stack**
+[![Live Dashboard](https://img.shields.io/badge/Live-Dashboard-0090FF)](https://veil-stack-canteen.vercel.app/dashboard/)
+[![FEVM Calibration](https://img.shields.io/badge/FEVM-Calibration-42A5F5)](https://calibration.filfox.info/en/address/0x04dEf60e2853E4d654b366cd8103F929c456d4b7)
 
-**A Confidential, Decentralized Container Orchestration Layer Powered by FHE**
+# Veil Stack: Decentralized Container Orchestrator — Every Workload Originates a Paid Filecoin Storage Deal
 
-**Veil Stack** is a **privacy-preserving, decentralized container orchestration platform** that enables organizations and distributed compute networks to securely schedule and manage containerized workloads **without exposing sensitive operational data**. Built on **libp2p** for peer-to-peer coordination and anchored by an **Ethereum smart contract** for shared state and governance, Veil Stack introduces **Zama’s Universal Fully Homomorphic Encryption (FHE) SDK** to enable **encrypted cluster telemetry, scheduling decisions, and policy enforcement**.
+Veil Stack is a **decentralized container orchestration platform** that connects container scheduling to **paid Filecoin storage deals**. Node coordination runs over **libp2p**, cluster state is governed by an **FEVM smart contract** (Canteen.sol) deployed on **Filecoin Calibration**, and each deployment manifest is pinned to **IPFS**.
 
-In Veil Stack, cluster nodes never need to reveal their resource utilization metrics, performance data, or workload profiles. Instead, orchestration logic operates directly on **encrypted inputs**, ensuring that:
+Looking ahead, every scheduled workload will automatically originate a Filecoin deal:
 
-* **Resource data remains confidential**
-* **Scheduling decisions remain optimal**
-* **No cluster member gains insight into another’s infrastructure**
-* **The orchestration layer is trustless and verifiable**
+- An `addImage()` call proposes a Filecoin storage deal for the container image
+- The scheduler rejects images without a valid, active deal on-chain
+- CID-verified retrieval ensures pulled images match the on-chain deal commitment
+- Deal lifecycle (proposed → active → expired/slashed) is tracked in the dashboard
 
-This makes Veil Stack the first orchestration system capable of operating in **zero-trust distributed compute environments**, where nodes may be owned by different organizations, providers, or decentralized network participants.
-
----
-
-### **Why Veil Stack Matters**
-
-Conventional orchestrators (Kubernetes, Nomad, DC/OS) require centralized control and **full visibility** into all cluster internals. This creates risks:
-
-* Sensitive performance or topology data can leak.
-* Cross-institutional collaboration becomes impossible without trust.
-* Operators are forced to centralize their infrastructure and governance.
-
-Veil Stack removes that trust bottleneck.
-
-By combining:
-
-| Component                   | Responsibility                                                                      |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| **libp2p**                  | Peer discovery, messaging, cluster health gossip (SWIM)                             |
-| **Ethereum smart contract** | State anchoring, membership registry, governance & cluster metadata                 |
-| **Zama Universal FHE SDK**  | Encrypted scheduling, encrypted decision functions, confidential policy enforcement |
-
-Veil Stack turns container orchestration into a **trust-minimized protocol**, not a centralized control plane.
+This turns container orchestration into a **Filecoin deal origination engine** — each deployment creates net-new paid storage demand.
 
 ---
 
-### **Key Capabilities**
+### Why This Matters
 
-| Capability                                | Description                                                                                        |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Encrypted Resource Scheduling**         | Nodes share encrypted utilization and performance signals; scheduling runs entirely on ciphertext. |
-| **Zero-Trust Cluster Federation**         | Multiple organizations can operate as one cluster without exposing internal infrastructure.        |
-| **Decentralized Control Plane**           | No single point of failure; operations continue even if nodes drop offline.                        |
-| **Confidential Replication & Redundancy** | Workloads can be mirrored across nodes without revealing topology or load patterns.                |
+Filecoin's storage market needs **programmatic, recurring demand**. Veil Stack supplies exactly that:
 
----
-
-### **Example Use Cases**
-
-* **Healthcare compute cooperatives** where patient-data-derived workloads require strict confidentiality
-* **Cross-cloud ML training clusters** where cloud providers should not see competitor data
-* **Decentralized cloud and edge compute networks** where participants are semi-trusted or anonymous
-* **Governmental or defense computing environments** requiring operational secrecy
+| Problem | Veil Stack Solution |
+|---|---|
+| Filecoin deals are mostly manual, one-off | Every container deployment **is designed to** automatically propose, monitor, and renew deals |
+| FEVM is underutilized beyond simple storage contracts | Canteen.sol on FEVM proves real-time scheduling logic on Filecoin |
+| Decentralized cloud lacks a verifiable storage substrate | IPFS CID pinning + Filecoin deal anchoring = tamper-evident image delivery |
+| Multi-organization clusters need trust-minimized coordination | libp2p federation + FEVM governance enable cross-org clusters |
 
 ---
 
-### **Outcome**
+### Current State
 
-Veil Stack creates the foundation for the **Confidential Decentralized Cloud** — where compute is:
+Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654b366cd8103F929c456d4b7`](https://calibration.filfox.info/en/address/0x04dEf60e2853E4d654b366cd8103F929c456d4b7). What exists now and what's planned next:
 
-* Peer-to-peer
-* Verifiable
-* Always available
-* And **encrypted end-to-end**
-
-# Veil Stack — Architecture Diagram
-
-This document provides a **text-based architecture diagram** and explanation suitable for inclusion in a GitHub repo README. It uses ASCII/mermaid diagrams and step-by-step flows to describe how Veil Stack (Veil Stack = canteen + Zama FHE + libp2p + Ethereum) coordinates privacy-preserving, decentralized container orchestration.
-
----
-
-## Overview
-
-Veil Stack is a decentralized orchestration layer that performs scheduling and policy evaluation on **encrypted telemetry** using Zama's Universal FHE SDK. The network relies on **libp2p** for peer-to-peer networking and SWIM-style health gossip, and an **Ethereum smart contract** for membership, governance, and anchoring important cluster metadata.
-
-This file contains:
-
-* A high level ASCII diagram
-* A mermaid sequence diagram (GitHub-friendly)
-* Component descriptions
-* Data flow / step-by-step scheduling flow
-* Example configuration snippets (env / contract pointers)
+| Component | Status |
+|---|---|
+| Canteen.sol on FEVM Calibration (membership + image registry) | Deployed and working |
+| Web dashboard with D3 force-directed graph | Live at `/dashboard/` |
+| MetaMask connection with Filecoin Calibration (chain 314159) | Working |
+| Read-only and MetaMask-signed contract operations | Working |
+| libp2p cluster networking (TCP, mDNS, gossip heartbeats) | Working |
+| Docker container runtime (pull, create, start, stop) | Working |
+| IPFS deployment manifest pinning via Pinata | Working |
+| DealAnchored event listener + deal history table (V2-ready) | Built, awaiting V2 contract |
+| **Automated Filecoin deal proposal from addImage()** | **Planned** |
+| **Deal monitoring (proposed → active → expired/slashed)** | **Planned** |
+| **CID-verified image retrieval** | **Planned** |
+| **Multi-provider deal fallback** | **Planned** |
+| **FHE confidential scheduling** | **Research** |
 
 ---
 
-## High-level ASCII diagram
+### Architecture
 
 ```
-+----------------------+      +----------------------+      +----------------------+
-|   Operator / UI      | <--> |  Ethereum / Smart    | <--> |  Governance / ACLs   |
-|  (CLI / Dashboard)   |      |  Contract (Registry) |      |  (on-chain policies) |
-+----------------------+      +----------------------+      +----------------------+
-         ^   |                          ^   |                         
-         |   |                          |   |                       
-         |   v                          |   v                       
-+----------------------+      +----------------------+      +----------------------+
-|   Veil Node A        | <--> |   Veil Node B        | <--> |   Veil Node C        |
-|  (libp2p host)       |      |  (libp2p host)       |      |  (libp2p host)       |
-|  - SWIM gossip       |      |  - SWIM gossip       |      |  - SWIM gossip       |
-|  - Zama FHE runtime  |      |  - Zama FHE runtime  |      |  - Zama FHE runtime  |
-|  - Encrypted metrics |      |  - Encrypted metrics |      |  - Encrypted metrics |
-|  - Local DockerExec  |      |  - Local DockerExec  |      |  - Local DockerExec  |
-+----------------------+      +----------------------+      +----------------------+
-         |                           |                           |
-         v                           v                           v
-+----------------------+      +----------------------+      +----------------------+
-|  Docker Host(s)      |      |  Docker Host(s)      |      |  Docker Host(s)      |
-|  (runs containers)   |      |  (runs containers)   |      |  (runs containers)   |
-+----------------------+      +----------------------+      +----------------------+
-
+                   ┌──────────────────────────┐
+                   │   Operator / Dashboard    │
+                   │  (React + D3 + Web3)      │
+                   └────────────┬─────────────┘
+                                │
+           ┌────────────────────┼────────────────────┐
+           │                    │                    │
+           ▼                    ▼                    ▼
+    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+    │  FEVM        │    │  FEVM        │    │  FEVM        │
+    │  Contract    │◄──►│  Contract    │◄──►│  Contract    │
+    │  (Canteen)   │    │  (Canteen)   │    │  (Canteen)   │
+    └──────────────┘    └──────────────┘    └──────────────┘
+           │                    │                    │
+           ▼                    ▼                    ▼
+    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+    │  Veil Node A │◄──►│  Veil Node B │◄──►│  Veil Node C │
+    │  (libp2p)    │    │  (libp2p)    │    │  (libp2p)    │
+    │  + scheduler │    │  + scheduler │    │  + scheduler │
+    └──────┬───────┘    └──────┬───────┘    └──────┬───────┘
+           │                    │                    │
+           ▼                    ▼                    ▼
+    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+    │  Docker Host │    │  Docker Host │    │  Docker Host │
+    │  + IPFS pin  │    │  + IPFS pin  │    │  + IPFS pin  │
+    └──────────────┘    └──────────────┘    └──────────────┘
+           │                    │                    │
+           └────────────────────┼────────────────────┘
+                                │
+                                ▼
+                     ┌──────────────────┐
+                     │  Filecoin Network │
+                     │  (Calibration →   │
+                     │   Mainnet)        │
+                     └──────────────────┘
 ```
 
-*Notes:*
+**Components:**
 
-* Veil Nodes form a mesh using **libp2p** for discovery and messaging.
-* Scheduling inputs (CPU, mem, priority) are encrypted with **Zama FHE**; scheduling decision logic operates on ciphertexts.
-* The Ethereum smart contract holds registry, membership, and high-level governance metadata (e.g., allowed images, staking, ACLs).
+| Component | Description |
+|---|---|
+| **Canteen.sol (FEVM)** | Smart contract on Filecoin EVM that governs cluster membership, image registry, and storage deal anchoring |
+| **Dashboard** | React + D3 frontend connected via Web3 to Canteen.sol; reads contract state, visualizes cluster topology, and displays deal history |
+| **Veil Node (libp2p)** | Peer-to-peer node with TCP transport, Noise encryption, mDNS/bootstrap discovery, and pubsub health gossip |
+| **Scheduler** | Listens for FEVM events (MemberJoin, MemberImageUpdate) and manages Docker containers accordingly; pins deployment manifests to IPFS |
+| **IPFS Service** | Pins deployment manifests to IPFS via Pinata, providing verifiable deployment records |
+| **Filecoin Network** | Target chain for FEVM contract and Filecoin deal origination (Calibration testnet now, mainnet migration planned) |
 
 ---
 
-## Mermaid sequence diagram (GitHub rendered)
+### Filecoin Integration
 
-```mermaid
-sequenceDiagram
-    participant Operator
-    participant Contract as Ethereum
-    participant NodeA
-    participant NodeB
-    participant Zama
-    participant Docker
+The Filecoin layer is the centerpiece of Veil Stack's architecture:
 
-    Operator->>Contract: registerCluster() / upload policy
-    Operator->>NodeA: deploy veil-node (config -> contract address)
-    NodeA->>Contract: readClusterMetadata()
-    NodeA->>NodeB: libp2p SWIM: gossip (encrypted metrics)
-    NodeB->>Zama: evaluate_schedule(encrypted_metrics)
-    Zama-->>NodeB: encrypted_decision
-    NodeB->>Docker: docker pull && docker run
-    NodeB->>Contract: anchorDeployment(tx)
-    Contract-->>Operator: deploymentConfirmed
+#### Current (V1 — Deployed)
+
+| Feature | Description |
+|---|---|
+| **Canteen.sol on FEVM Calibration** | Member management (addMember, removeMember), image registry (addImage, removeImage), rebalancing, port mapping |
+| **Dashboard integration** | Read contract state, register nodes, add/remove images via MetaMask on Filecoin Calibration |
+| **Event-driven scheduler** | Listens for MemberJoin, MemberLeave, MemberImageUpdate events; schedules Docker containers accordingly |
+| **IPFS manifest pinning** | Each deployment manifest pinned to IPFS via Pinata for verifiability |
+
+#### Planned (V2)
+
+| Feature | Description |
+|---|---|
+| **StorageDeal struct** | On-chain record: `dealId`, `providerId`, `payloadCid`, `size`, `term` |
+| **filecoin-service** | Backend module integrating Lotus JSON-RPC or Glif SDK for deal proposal and monitoring |
+| **Deal lifecycle** | `addImage()` proposes a deal, monitors proposed → active → expired/slashed transitions |
+| **CID-verified retrieval** | Before pulling an image, verify its CID matches the on-chain deal commitment |
+| **Multi-provider fallback** | Re-propose to next available provider if one goes offline |
+| **DealAnchored event** | V2 contract emits `DealAnchored(cid, dealId, payer)` — listener already built in dashboard |
+
+---
+
+### Dashboard
+
+The live dashboard at `https://veil-stack-canteen.vercel.app/dashboard/` provides:
+
+- **Cluster visualization** — D3 force-directed graph of active Veil nodes with their assigned images
+- **Contract state** — List of deployed images, member count, contract address, Web3 and cluster connectivity
+- **MetaMask integration** — Connect with Filecoin Calibration to register nodes, add/remove images
+- **IPFS status** — Shows recent deployment pins with gateway links
+- **DealAnchored listener** — Subscribes to V2 contract events; gracefully displays "V2 pending" until V2 contract deploys
+- **Deal history table** — Ready to display anchored deals with CID, deal ID, payer, and status
+
+**Environment** (`.env`):
+
+```
+REACT_APP_FIL_CONTRACT_ADDRESS=0x04dEf60e2853E4d654b366cd8103F929c456d4b7
+REACT_APP_FIL_RPC_URL=https://api.calibration.node.glif.io/rpc/v1
+REACT_APP_FIL_CHAIN_ID=314159
+REACT_APP_CLUSTER_URL=http://localhost:5001/cluster
+REACT_APP_IPFS_URL=http://localhost:5001/ipfs
 ```
 
+---
 
-## Component descriptions
+### Key Capabilities
 
-**Operator / Dashboard**
-
-* CLI or web dashboard used by cluster admins to register clusters, define policies, and publish container images (images still on Docker Hub / registry).
-
-**Ethereum Smart Contract (Registry / Governance)**
-
-* Stores cluster registry, operator keys, ACLs, allowed image lists, and anchors important lifecycle events (e.g., deployments).
-* Provides on-chain governance hooks to dispute or audit scheduling outcomes (high level only — heavy computation is off-chain).
-
-**Veil Node (Veil Stack runtime)**
-
-* `libp2p` host for peer discovery, pubsub, and direct messaging.
-* Implements a SWIM-like health protocol to maintain liveness information.
-* Integrates **Zama Universal FHE SDK** to encrypt and compute on telemetry.
-* Exposes local container runtime access (Docker / containerd) for launching workloads.
-* Can operate with optional state-channels / off-chain compute layers for heavier scheduling ops.
-
-**Zama FHE Runtime**
-
-* Provides encryption, ciphertext arithmetic, and evaluation APIs. Scheduling logic (e.g., cost function) is expressed as FHE evaluable circuits or functions.
-* Ciphertext inputs: node resource metrics, node priority, replica preferences, constraints.
-* Ciphertext outputs: scheduling decisions (which node(s) should host a given container), which then are decrypted by the requester or a designated decryption authority (depending on trust model).
-
-**Docker Host(s)**
-
-* Hosts actually run container images; they are controlled by the local Veil Node's DockerExec.
-* Images are still pulled from regular registries (e.g., Docker Hub, private registries). Image manifests and signatures can be anchored on-chain or via registry.
+| Capability | Description |
+|---|---|
+| **Filecoin deal automation** | Every container deployment originates, monitors, and renews a paid Filecoin storage deal _(planned)_ |
+| **FEVM-governed scheduling** | Smart contract on Filecoin EVM manages membership, image registry, deal anchoring |
+| **libp2p cluster networking** | Peer discovery, SWIM health gossip, pubsub messaging — no central control plane |
+| **Docker container runtime** | Pull, create, start, stop, remove containers via Docker Engine API |
+| **React + D3 dashboard** | Web3-connected, Filecoin Calibration-native, token-gated |
+| **IPFS deployment pinning** | Verifiable deployment manifest storage via Pinata |
+| **CID-verified retrieval** | Tamper-evident image pulling with on-chain deal commitment verification _(planned)_ |
+| **Multi-provider deal fallback** | Automatic re-proposal if a storage provider goes offline _(planned)_ |
 
 ---
 
-## Data flow & scheduling steps (detailed)
+### Quick Start
 
-**1. Cluster registration**
+**Connect to the live deployment:**
 
-* Operator deploys the Veil Stack smart contract (or uses an existing one).
-* Operator registers node identities (libp2p peerIDs) and governance keys with the contract.
+Open the dashboard at `https://veil-stack-canteen.vercel.app/dashboard/` and connect MetaMask to Filecoin Calibration (chain ID 314159).
 
-**2. Node boot & discovery**
-
-* Each Veil Node boots with configuration pointing to the contract address and local FHE key material (public key share or ephemeral key depending on the model).
-* Nodes join mesh via libp2p and exchange encrypted heartbeats / metrics via SWIM.
-
-**3. Encrypted telemetry exchange**
-
-* Each node gathers resource metrics (CPU, mem, disk, GPU availability, latency) and encrypts them with Zama's FHE public key.
-* Encrypted metrics are gossiped or sent to the candidate scheduler nodes.
-
-**4. FHE scheduling evaluation**
-
-* A scheduler (could be elected via simple leader-election or run redundantly) collects ciphertexts and runs the scheduling cost function under FHE using Zama.
-* The evaluation returns encrypted assignment decisions.
-
-**5. Decision decryption & enforcement**
-
-* Depending on privacy model:
-
-  * *Designated decryptor model:* a trusted operator key (or multi-party threshold) decrypts assignments, and nodes enforce the decisions.
-  * *Zero-knowledge reveal model:* only minimal metadata (e.g., which node will run replica) is revealed to relevant parties.
-* Veil Node pulls images and invokes local container runtime to start the container.
-
-**6. Anchor deployment on-chain**
-
-* Nodes optionally post a deployment transaction to the contract with a hash/commitment of the assignment and metadata.
-* This allows auditing and dispute resolution while keeping raw telemetry private.
-
----
-
-## Example configuration snippets
-
-**Environment variables (example)**
+**Run a local node:**
 
 ```bash
-# Veil node config
-VEIL_CONTRACT_ADDRESS=0xAbC...123
-VEIL_LIBP2P_BOOTSTRAP=/ip4/1.2.3.4/tcp/4001/p2p/QmBootstrap
-VEIL_ZAMA_PUBLICKEY_FILE=/etc/veil/zama_pubkey.bin
-VEIL_NODE_PEERID=Qm...
-VEIL_DOCKER_SOCKET=/var/run/docker.sock
+# Clone the repository
+git clone https://github.com/seetadev/Veil-Stack.git
+cd Veil-Stack/canteen
+
+# Install dependencies
+npm install
+
+# Deploy Canteen.sol to Filecoin Calibration
+npm run migrate:filecoin
+
+# Start a Veil node
+npm start
 ```
 
-**Smart contract: basic interface (pseudo ABI)**
+**Build the dashboard:**
 
-```solidity
-interface IVeilRegistry {
-  function registerNode(bytes32 peerID, address operator) external;
-  function anchorDeployment(bytes32 assignmentHash) external returns (bool);
-  function getClusterPolicy() external view returns (bytes memory);
-}
+```bash
+cd canteen/dashboard
+npm install
+NODE_OPTIONS=--openssl-legacy-provider npm run build
 ```
 
 ---
 
-## Notes on threat model & privacy choices
+### Roadmap
 
-* **FHE guarantees**: Computations on telemetry remain ciphertext-only to nodes performing the computation. The final model depends on who holds decryption keys.
-* **Key management**: Consider multi-party threshold decryption or secure enclaves to reduce trusted parties.
-* **Attestation**: Use libp2p peerIDs and on-chain anchors to attest to node identities and state.
-* **Auditability**: Put compact commitments on-chain (hashes) rather than raw telemetry to preserve privacy while enabling transparency.
+| Priority | Feature | Status |
+|---|---|---|
+| P0 | Canteen.sol V1 on FEVM Calibration | Done |
+| P0 | Web dashboard with D3 visualization | Done |
+| P0 | libp2p cluster networking | Done |
+| P0 | Docker container management | Done |
+| P0 | IPFS deployment pinning | Done |
+| P0 | V2 contract with StorageDeal + DealAnchored | Planned |
+| P0 | Filecoin deal proposal and monitoring | Planned |
+| P0 | CID-verified image retrieval | Planned |
+| P0 | Deal lifecycle dashboard visualization | Planned |
+| P1 | Multi-provider deal fallback | Planned |
+| P1 | Mainnet migration | Future |
+| P2 | Zama FHE confidential scheduling | Research |
+| P2 | 10-node cluster CI + federation model | Research |
+| P3 | Security audit | Planned |
 
 ---
 
-## Extensions & TODO
+### License
 
-* Add merkle commitments for container image manifests and anchor them on-chain.
-* Add an optional state-channel layer for high-frequency scheduling updates.
-* Implement multiple scheduling policies (priority round-robin, bin-packing under FHE, cost-minimization for latency-sensitive tasks).
-* Provide a reference configuration for threshold FHE decryption (MPC + Zama bridge).
-
----
-
-### Appendix: Quick start pointers
-
-1. Deploy the Veil Registry contract to your EVM chain and note the address.
-2. Configure a small 3-node mesh with libp2p bootstrap peers and place Zama public keys on each node.
-3. Launch nodes pointing to the contract address and register peers on-chain.
-4. Start encrypted telemetry gossip and run the reference FHE scheduling example.
-
-
-
-
-
-
-
+MIT

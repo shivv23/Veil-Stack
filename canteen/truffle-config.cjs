@@ -30,10 +30,14 @@ module.exports = {
     
     // Filecoin Calibration Testnet
     filecoin: {
-      provider: () => new HDWalletProvider(
-        process.env.MNEMONIC,
-        process.env.FIL_RPC_URL || 'https://api.calibration.node.glif.io/rpc/v1'
-      ),
+      provider: () => new HDWalletProvider({
+        mnemonic: {
+          phrase: process.env.MNEMONIC
+        },
+        providerOrUrl: process.env.FIL_RPC_URL || 'https://api.calibration.node.glif.io/rpc/v1',
+        pollingInterval: 15000,
+        chainId: 314159
+      }),
       network_id: 314159,
       chain_id: 314159,
       gas: 4500000,
