@@ -1,6 +1,6 @@
 # FEVM Calibration Setup Guide
 
-Guide for deploying Canteen.sol on Filecoin Calibration testnet (V1 currently deployed; V2 grant-funded).
+Guide for deploying Canteen.sol on Filecoin Calibration testnet.
 
 ## Prerequisites
 
