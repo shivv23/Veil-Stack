@@ -45,7 +45,7 @@ export const TOKEN_CONFIG = {
 export const SERVER_CONFIG = {
   port: process.env.PORT || 5000,
   webPort: process.env.WEB_PORT || 5001,
-  activeChain: process.env.ACTIVE_CHAIN || 'ethereum'
+  activeChain: process.env.ACTIVE_CHAIN || 'filecoin'
 }
 
 // Get active chain configuration
@@ -54,7 +54,7 @@ export function getActiveChain() {
   const chain = CHAINS[chainKey]
   
   if (!chain) {
-    throw new Error(`Invalid ACTIVE_CHAIN: ${SERVER_CONFIG.activeChain}. Must be 'ethereum' or 'filecoin'`)
+    throw new Error(`Invalid ACTIVE_CHAIN: ${SERVER_CONFIG.activeChain}. Must be 'filecoin' or 'ethereum'`)
   }
   
   if (!chain.contractAddress) {

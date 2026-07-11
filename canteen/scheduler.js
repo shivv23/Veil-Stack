@@ -46,7 +46,8 @@ class CanteenScheduler {
       }
     }
 
-    const docker = new Docker({socketPath: dockerPath})
+    const dockerOpts = process.env.DOCKER_HOST ? { host: process.env.DOCKER_HOST } : { socketPath: dockerPath }
+    const docker = new Docker(dockerOpts)
 
     this.docker = docker
     this.contract = contract

@@ -1,4 +1,6 @@
-# 🚀 Sepolia Testnet Setup Guide
+# 🚀 Sepolia Testnet Setup Guide (Deprecated)
+
+**Note:** The default network has moved to Filecoin Calibration. This guide is retained for reference only. Use `canteen/deploy-fevm.cjs` for new deployments on Calibration.
 
 Your configuration is ready! Follow these steps to deploy on Sepolia testnet.
 

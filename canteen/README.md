@@ -1,6 +1,6 @@
 # canteen.
 
-A decentralized container orchestrating system (Kubernetes), running on Ethereum. 
+A decentralized container orchestrating system (Kubernetes) anchored by an FEVM smart contract on Filecoin. 
 
 The modern tech startup/enterprise is comprised of tens or hundreds or even thousands of crucial technical components such as databases, backends, replicas of databases, stream processing platforms, etc.
 
@@ -25,7 +25,7 @@ As good as this may sound though, what are the disadvantages to employing a cont
 
 ## Introducing canteen
 
-canteen is an extremely scalable container orchestrator that is fault-tolerant, easy to install, easy to distribute, and most importantly decentralized through the utility of an Ethereum smart contract.
+canteen is an extremely scalable container orchestrator that is fault-tolerant, easy to install, easy to distribute, and most importantly decentralized through the utility of an FEVM smart contract on Filecoin.
 
 canteen efficiently schedules and orchestrates designated Docker containers to a set of servers based on speculated/provisioned container resource limits.
 
@@ -37,7 +37,7 @@ https://docs.google.com/presentation/d/16UA1B5uPBWCZlvGwPWEaRGOn3Be_-StJ2hxTuyMR
 
 All you need to do to have canteen work with your tech stack is have your tech components in a Docker container uploaded on Docker Hub.
 
-Deploy the smart contract on whatever chain supports the Ethereum Virtual Machine, and edit the configuration of canteen's node file to point to the smart contract and chain.
+Deploy the smart contract on any EVM-compatible chain (Filecoin FEVM Calibration is the default), and edit the configuration of canteen's node file to point to the smart contract and chain.
 
 Run canteen's node on your set of servers and register your Docker images on the smart contract.
 
