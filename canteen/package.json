@@ -27,10 +27,8 @@
     "dockerode": "^4.0.2",
     "dotenv": "^16.6.1",
     "express": "^4.19.2",
-    "helia": "^4.2.1",
     "libp2p": "^1.2.0",
     "lodash": "^4.17.21",
-    "orbit-db": "^0.28.2",
     "web3": "^4.10.0"
   },
   "devDependencies": {
