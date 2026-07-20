@@ -49,7 +49,7 @@ canteen can even replicate Docker containers to any amount of servers you choose
 
 Given that this was made for a 36-hour hackathon, we only implemented a priority-based Round-robin scheduling mechanism for choosing a set of servers to deploy a set of Docker images to.
 
-Each canteen node uses the SWIM protocol off-chain to determine the liveliness of all servers to efficiently schedule Docker containers to healthy servers. Should a server go down, images will be minimally rescheduled to ensure minimal product/service downtime.
+Each canteen node uses libp2p gossip heartbeats off-chain to determine the liveliness of all servers to efficiently schedule Docker containers to healthy servers. Should a server go down, images will be minimally rescheduled to ensure minimal product/service downtime.
 
 ## Next Steps
 
