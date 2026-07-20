@@ -1,26 +1,26 @@
-## Veil Stack: Decentralized Container Orchestrator — Every Workload Originates a Paid Filecoin Storage Deal
+## Veil Stack: Decentralized Container Orchestrator
 
-Veil Stack is a **decentralized container orchestration platform** where every scheduled workload automatically originates a **paid Filecoin storage deal**. Cluster scheduling is governed by an **FEVM smart contract**, node coordination runs over **libp2p**, and an optional **Zama FHE** layer enables confidential scheduling for regulated workloads.
+Veil Stack is a **decentralized container orchestration platform** governed by an **FEVM smart contract**. Cluster scheduling runs over **libp2p**, node coordination is managed on-chain, and an optional **Zama FHE** layer enables confidential scheduling for regulated workloads.
 
-In Veil Stack, scheduling a container is inseparably linked to making a Filecoin deal:
-- Every `addImage()` call proposes a Filecoin storage deal for the container image
-- The scheduler rejects images without a valid, active deal
-- CID-verified retrieval ensures the pulled image matches the on-chain deal commitment
-- Deal lifecycle (proposed → active → expired/slashed) is tracked in the dashboard
+Current V1 implementation:
+- Canteen.sol on FEVM Calibration manages membership and image registry
+- libp2p gossip heartbeats for peer discovery and health monitoring
+- Docker container runtime (pull, create, start, remove)
+- IPFS pinning via Pinata for container metadata and image manifests
+- React + D3 dashboard with MetaMask integration
 
-This turns container orchestration into a **Filecoin deal origination engine** — every deployment creates net-new paid storage demand on Filecoin.
+**Planned (V2)**: Every `addImage()` call will propose a Filecoin storage deal, with CID-verified retrieval and deal lifecycle tracking.
 
 ---
 
 ### Why This Matters
 
-Filecoin's storage market needs **programmatic, recurring demand**. Veil Stack supplies exactly that:
+Decentralized container orchestration needs **on-chain governance** and **verifiable storage**:
 
 | Problem | Veil Stack Solution |
 |---|---|
-| Filecoin deals are mostly manual, one-off | Every container deployment **automatically** proposes, monitors, and renews deals |
-| FEVM is underutilized beyond storage contracts | Canteen.sol on FEVM proves real-time scheduling logic on Filecoin |
-| Decentralized cloud lacks a storage substrate | IPFS CID verification + Filecoin deal anchoring = tamper-evident image delivery |
+| Container orchestration is centralized | FEVM smart contract governs membership and scheduling |
+| No verifiable link between workloads and storage | IPFS pinning for tamper-evident metadata storage |
 | Regulated workloads need confidentiality | Optional Zama FHE encryption for scheduling on ciphertext |
 
 ---
@@ -69,19 +69,15 @@ Filecoin's storage market needs **programmatic, recurring demand**. Veil Stack s
 
 ---
 
-### Filecoin Integration
+### Filecoin Integration (Current V1)
 
-The Filecoin layer is the centerpiece of Veil Stack's architecture:
-
-| Component | Description |
+| Component | Status |
 |---|---|
-| **Canteen.sol on FEVM** | Smart contract on Filecoin EVM (Calibration → Mainnet) governs membership, image registry, storage deal anchoring |
-| **StorageDeal struct** | On-chain record: `dealId`, `providerId`, `payloadCid`, `size`, `term`. Images without active deals are rejected |
-| **filecoin-service.js** | Backend module integrating Lotus JSON-RPC or Glif SDK. On `addImage()`: compute CID, propose deal, monitor state |
-| **CID-verified retrieval** | Before pulling an image, verify its CID matches the on-chain deal. Tamper-evident, auditable |
-| **Multi-provider fallback** | If a deal provider goes offline, automatically re-propose to the next available provider |
+| **Canteen.sol on FEVM** | Deployed on Calibration. Membership + image registry. No deal logic yet. |
+| **IPFS pinning (Pinata)** | Container metadata and image manifests pinned automatically |
+| **Multi-chain config** | Ethereum Sepolia + Filecoin Calibration |
 
-#### Deal Lifecycle
+#### Planned V2: Deal Pipeline
 
 ```
 addImage(image)
@@ -91,11 +87,9 @@ addImage(image)
   │     └── monitor: proposed → active → (expired | slashed)
   ├── link deal to image in Canteen.sol
   └── image ready for scheduling
-        │
-        scheduler: reject images without active deals
-        pull: verify CID matches on-chain commitment
-        if verification fails: fall back to IPFS gateway, flag for admin
 ```
+
+The V2 deal pipeline is the core deliverable of the NLnet grant.
 
 ---
 
@@ -103,11 +97,11 @@ addImage(image)
 
 Veil Stack can optionally encrypt scheduling inputs using **Zama's Universal FHE SDK** for zero-trust and regulated environments:
 
-- **Encrypted telemetry**: Nodes encrypt CPU, memory, and disk metrics before gossiping via libp2p SWIM heartbeats
+- **Encrypted telemetry**: Nodes encrypt CPU, memory, and disk metrics before gossiping via libp2p gossipsub heartbeats
 - **Ciphertext scheduling**: Scheduling cost functions execute on encrypted inputs — no node sees another's raw metrics
 - **Toggle-able**: `VEIL_FHE_MODE=enabled|disabled` — plaintext scheduling is the default; FHE is ON for sensitive clusters
 
-This is an **optional add-on** for clusters that need confidentiality (healthcare, defense, cross-cloud ML). The core Filecoin deal pipeline works with or without it.
+This is an **optional add-on** for clusters that need confidentiality (healthcare, defense, cross-cloud ML). The core scheduling works with or without it.
 
 ---
 
@@ -115,14 +109,14 @@ This is an **optional add-on** for clusters that need confidentiality (healthcar
 
 | Capability | Description |
 |---|---|
-| **Filecoin deal automation** | Every container deployment originates, monitors, and renews a paid Filecoin storage deal |
-| **FEVM-governed scheduling** | Smart contract on Filecoin EVM manages membership, image registry, deal anchoring |
-| **libp2p cluster networking** | Peer discovery, SWIM health gossip, pubsub messaging — no central control plane |
-| **Docker container runtime** | Pull, create, start, stop, remove containers via Docker Engine API |
+| **Filecoin deal automation** | Every container deployment originates, monitors, and renews a paid Filecoin storage deal _(planned V2)_ |
+| **FEVM-governed scheduling** | Smart contract on Filecoin EVM manages membership and image registry |
+| **libp2p cluster networking** | Peer discovery, gossipsub heartbeats, pubsub messaging — no central control plane |
+| **Docker container runtime** | Pull, create, start, and remove containers via Docker Engine API |
 | **React + D3 dashboard** | Web3-connected, multi-chain (Ethereum Sepolia + Filecoin Calibration), token-gated |
-| **Confidential scheduling (FHE)** | Optional Zama FHE encrypted telemetry and scheduling for regulated workloads |
-| **CID-verified retrieval** | Tamper-evident image pulling with on-chain deal commitment verification |
-| **Multi-provider deal fallback** | Automatic re-proposal if a storage provider goes offline |
+| **Confidential scheduling (FHE)** | Optional Zama FHE encrypted telemetry and scheduling for regulated workloads _(planned)_ |
+| **CID-verified retrieval** | Tamper-evident image pulling with on-chain deal commitment verification _(planned V2)_ |
+| **Multi-provider deal fallback** | Automatic re-proposal if a storage provider goes offline _(planned V2)_ |
 
 ---
 
@@ -130,10 +124,10 @@ This is an **optional add-on** for clusters that need confidentiality (healthcar
 
 | Use Case | Why Veil Stack |
 |---|---|
-| **Decentralized cloud compute** | Container orchestration with automatic Filecoin deal origination — every workload creates storage demand |
+| **Decentralized cloud compute** | Container orchestration with on-chain governance and IPFS-backed metadata storage |
 | **Regulated workloads** | FHE layer keeps scheduling metrics encrypted; audit trail on-chain via FEVM |
 | **Cross-org compute cooperatives** | libp2p federation + FEVM governance enable multi-org clusters without trust |
-| **AI/ML training pipelines** | Large model artifacts stored on Filecoin, verified before each training run |
+| **AI/ML training pipelines** | Verifiable workload scheduling with tamper-evident audit trail _(planned: on-chain deal anchoring)_ |
 
 ---
 
@@ -142,7 +136,7 @@ This is an **optional add-on** for clusters that need confidentiality (healthcar
 1. **Deploy Canteen.sol** to Filecoin Calibration or Ethereum Sepolia
 2. **Configure** `.env` with contract address, bootstrap peer, and Filecoin endpoint
 3. **Start nodes**: `docker compose up` — Ganache, Canteen backend, Dashboard
-4. **Add an image**: `addImage()` → proposes Filecoin deal, links CID to contract
+4. **Add an image**: `addImage()` → registers image in contract, ready for scheduling
 5. **Schedule**: The event-driven scheduler assigns containers to nodes with active deals
 
 ```bash
@@ -156,8 +150,8 @@ npx truffle migrate --network filecoin
 
 | Priority | Feature | Status |
 |---|---|---|
-| P0 | FEVM contract deployment + StorageDeal struct | Planned |
-| P0 | filecoin-service.js — deal proposal & monitoring | Planned |
+| P0 | FEVM contract upgrade + StorageDeal struct | Planned |
+| P0 | Deal proposal & monitoring service | Planned |
 | P0 | CID-verified image retrieval | Planned |
 | P0 | Dashboard deal lifecycle visualization | Planned |
 | P1 | Multi-provider deal fallback & health monitoring | Planned |
