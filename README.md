@@ -1,13 +1,13 @@
 [![Live Dashboard](https://img.shields.io/badge/Live-Dashboard-0090FF)](https://veil-stack-canteen.vercel.app/dashboard/)
 [![FEVM Calibration](https://img.shields.io/badge/FEVM-Calibration-42A5F5)](https://calibration.filfox.info/en/address/0x04dEf60e2853E4d654b366cd8103F929c456d4b7)
 
-# Veil Stack: Decentralized Container Orchestrator — Every Workload Originates a Paid Filecoin Storage Deal
+# Veil Stack: Decentralized Container Orchestrator — Designed to Originate a Paid Filecoin Storage Deal per Workload
 
-Veil Stack is a **decentralized container orchestration platform** that connects container scheduling to **paid Filecoin storage deals**. Node coordination runs over **libp2p**, cluster state is governed by an **FEVM smart contract** (Canteen.sol) deployed on **Filecoin Calibration**, and each deployment manifest is pinned to **IPFS**.
+Veil Stack is a **decentralized container orchestration platform** that connects container scheduling to **paid Filecoin storage deals**. Node coordination runs over **libp2p**, cluster state is governed by an **FEVM smart contract** (Canteen.sol) deployed on **Filecoin Calibration**.
 
 Looking ahead, every scheduled workload will automatically originate a Filecoin deal:
 
-- An `addImage()` call proposes a Filecoin storage deal for the container image
+- An `addImage()` call **will** propose a Filecoin storage deal for the container image
 - The scheduler rejects images without a valid, active deal on-chain
 - CID-verified retrieval ensures pulled images match the on-chain deal commitment
 - Deal lifecycle (proposed → active → expired/slashed) is tracked in the dashboard
@@ -24,7 +24,7 @@ Filecoin's storage market needs **programmatic, recurring demand**. Veil Stack s
 |---|---|
 | Filecoin deals are mostly manual, one-off | Every container deployment **is designed to** automatically propose, monitor, and renew deals |
 | FEVM is underutilized beyond simple storage contracts | Canteen.sol on FEVM proves real-time scheduling logic on Filecoin |
-| Decentralized cloud lacks a verifiable storage substrate | IPFS CID pinning + Filecoin deal anchoring = tamper-evident image delivery |
+| Decentralized cloud lacks a verifiable storage substrate | Filecoin deal anchoring = tamper-evident image delivery |
 | Multi-organization clusters need trust-minimized coordination | libp2p federation + FEVM governance enable cross-org clusters |
 
 ---
@@ -36,13 +36,13 @@ Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654
 | Component | Status |
 |---|---|
 | Canteen.sol on FEVM Calibration (membership + image registry) | Deployed and working |
-| Web dashboard with D3 force-directed graph | Live at `/dashboard/` |
+| Web dashboard with D3 force-directed graph | Source in `canteen/dashboard/` |
 | MetaMask connection with Filecoin Calibration (chain 314159) | Working |
 | Read-only and MetaMask-signed contract operations | Working |
 | libp2p cluster networking (TCP, mDNS, gossip heartbeats) | Working |
-| Docker container runtime (pull, create, start, stop) | Working |
-| IPFS deployment manifest pinning via Pinata | Working |
-| DealAnchored event listener + deal history table (V2-ready) | Built, awaiting V2 contract |
+| Docker container runtime (pull, create, start) | Working |
+| IPFS pinning via Pinata (container metadata, image manifests) | Working |
+| DealAnchored event listener + deal history table | **Planned (V2)** |
 | **Automated Filecoin deal proposal from addImage()** | **Planned** |
 | **Deal monitoring (proposed → active → expired/slashed)** | **Planned** |
 | **CID-verified image retrieval** | **Planned** |
@@ -78,7 +78,6 @@ Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654
            ▼                    ▼                    ▼
     ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
     │  Docker Host │    │  Docker Host │    │  Docker Host │
-    │  + IPFS pin  │    │  + IPFS pin  │    │  + IPFS pin  │
     └──────────────┘    └──────────────┘    └──────────────┘
            │                    │                    │
            └────────────────────┼────────────────────┘
@@ -95,12 +94,12 @@ Canteen.sol **V1** is deployed on Filecoin Calibration at [`0x04dEf60e2853E4d654
 
 | Component | Description |
 |---|---|
-| **Canteen.sol (FEVM)** | Smart contract on Filecoin EVM that governs cluster membership, image registry, and storage deal anchoring |
+| **Canteen.sol (FEVM)** | Smart contract on Filecoin EVM that governs cluster membership, image registry, and storage deal anchoring _(planned)_ |
 | **Dashboard** | React + D3 frontend connected via Web3 to Canteen.sol; reads contract state, visualizes cluster topology, and displays deal history |
 | **Veil Node (libp2p)** | Peer-to-peer node with TCP transport, Noise encryption, mDNS/bootstrap discovery, and pubsub health gossip |
-| **Scheduler** | Listens for FEVM events (MemberJoin, MemberImageUpdate) and manages Docker containers accordingly; pins deployment manifests to IPFS |
-| **IPFS Service** | Pins deployment manifests to IPFS via Pinata, providing verifiable deployment records |
+| **Scheduler** | Listens for FEVM events (MemberJoin, MemberImageUpdate) and manages Docker containers accordingly |
 | **Filecoin Network** | Target chain for FEVM contract and Filecoin deal origination (Calibration testnet now, mainnet migration planned) |
+| **Docker Socket Proxy** | `tecnativa/docker-socket-proxy` sidecar; exposes a restricted Docker API over TCP so canteen never holds a raw socket |
 
 ---
 
@@ -115,7 +114,6 @@ The Filecoin layer is the centerpiece of Veil Stack's architecture:
 | **Canteen.sol on FEVM Calibration** | Member management (addMember, removeMember), image registry (addImage, removeImage), rebalancing, port mapping |
 | **Dashboard integration** | Read contract state, register nodes, add/remove images via MetaMask on Filecoin Calibration |
 | **Event-driven scheduler** | Listens for MemberJoin, MemberLeave, MemberImageUpdate events; schedules Docker containers accordingly |
-| **IPFS manifest pinning** | Each deployment manifest pinned to IPFS via Pinata for verifiability |
 
 #### Planned (V2)
 
@@ -126,7 +124,7 @@ The Filecoin layer is the centerpiece of Veil Stack's architecture:
 | **Deal lifecycle** | `addImage()` proposes a deal, monitors proposed → active → expired/slashed transitions |
 | **CID-verified retrieval** | Before pulling an image, verify its CID matches the on-chain deal commitment |
 | **Multi-provider fallback** | Re-propose to next available provider if one goes offline |
-| **DealAnchored event** | V2 contract emits `DealAnchored(cid, dealId, payer)` — listener already built in dashboard |
+| **DealAnchored event** | V2 contract emits `DealAnchored(cid, dealId, payer)` — dashboard will display confirmations in real time |
 
 ---
 
@@ -137,10 +135,6 @@ The live dashboard at `https://veil-stack-canteen.vercel.app/dashboard/` provide
 - **Cluster visualization** — D3 force-directed graph of active Veil nodes with their assigned images
 - **Contract state** — List of deployed images, member count, contract address, Web3 and cluster connectivity
 - **MetaMask integration** — Connect with Filecoin Calibration to register nodes, add/remove images
-- **IPFS status** — Shows recent deployment pins with gateway links
-- **DealAnchored listener** — Subscribes to V2 contract events; gracefully displays "V2 pending" until V2 contract deploys
-- **Deal history table** — Ready to display anchored deals with CID, deal ID, payer, and status
-
 **Environment** (`.env`):
 
 ```
@@ -148,7 +142,13 @@ REACT_APP_FIL_CONTRACT_ADDRESS=0x04dEf60e2853E4d654b366cd8103F929c456d4b7
 REACT_APP_FIL_RPC_URL=https://api.calibration.node.glif.io/rpc/v1
 REACT_APP_FIL_CHAIN_ID=314159
 REACT_APP_CLUSTER_URL=http://localhost:5001/cluster
-REACT_APP_IPFS_URL=http://localhost:5001/ipfs
+```
+
+IPFS pinning (optional — requires Pinata keys):
+
+```
+PINATA_API_KEY=<your-api-key>
+PINATA_SECRET_KEY=<your-secret-key>
 ```
 
 ---
@@ -158,11 +158,11 @@ REACT_APP_IPFS_URL=http://localhost:5001/ipfs
 | Capability | Description |
 |---|---|
 | **Filecoin deal automation** | Every container deployment originates, monitors, and renews a paid Filecoin storage deal _(planned)_ |
-| **FEVM-governed scheduling** | Smart contract on Filecoin EVM manages membership, image registry, deal anchoring |
-| **libp2p cluster networking** | Peer discovery, SWIM health gossip, pubsub messaging — no central control plane |
-| **Docker container runtime** | Pull, create, start, stop, remove containers via Docker Engine API |
-| **React + D3 dashboard** | Web3-connected, Filecoin Calibration-native, token-gated |
-| **IPFS deployment pinning** | Verifiable deployment manifest storage via Pinata |
+| **FEVM-governed scheduling** | Smart contract on Filecoin EVM manages membership, image registry |
+| **libp2p cluster networking** | Peer discovery and health gossip via libp2p; membership governed by FEVM contract |
+| **Docker container runtime** | Pull, create, start, and remove containers via Docker Engine API |
+| **IPFS pinning (Pinata)** | Container metadata and image manifests pinned to IPFS for verifiable, tamper-evident storage |
+| **React + D3 dashboard** | Web3-connected, Filecoin Calibration-native |
 | **CID-verified retrieval** | Tamper-evident image pulling with on-chain deal commitment verification _(planned)_ |
 | **Multi-provider deal fallback** | Automatic re-proposal if a storage provider goes offline _(planned)_ |
 
@@ -187,6 +187,9 @@ npm install
 # Deploy Canteen.sol to Filecoin Calibration
 npm run migrate:filecoin
 
+# Or use the deploy script (see canteen/docs/FEVM_CALIBRATION_SETUP.md for details)
+node deploy-fevm.cjs
+
 # Start a Veil node
 npm start
 ```
@@ -209,7 +212,6 @@ NODE_OPTIONS=--openssl-legacy-provider npm run build
 | P0 | Web dashboard with D3 visualization | Done |
 | P0 | libp2p cluster networking | Done |
 | P0 | Docker container management | Done |
-| P0 | IPFS deployment pinning | Done |
 | P0 | V2 contract with StorageDeal + DealAnchored | Planned |
 | P0 | Filecoin deal proposal and monitoring | Planned |
 | P0 | CID-verified image retrieval | Planned |

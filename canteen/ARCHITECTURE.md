@@ -31,7 +31,7 @@
 │      │  - addImage()                        │                  │
 │      │  - addMember()                       │                  │
 │      │  - getImages()                       │                  │
-│      │  - Events: ImageAdded, MemberAdded   │                  │
+│      │  - Events: MemberJoin, MemberLeave, MemberImageUpdate │
 │      └────────────────┬─────────────────────┘                  │
 │                       │                                        │
 └───────────────────────┼────────────────────────────────────────┘
@@ -52,8 +52,8 @@
 │  │                                                         │     │
 │  │  ┌─────────────────────────────────────────────────┐    │     │
 │  │  │         Scheduler (Event-Driven)                │    │     │
-│  │  │  - Listen to ImageAdded events                  │    │     │
-│  │  │  - Listen to MemberAdded events                 │    │     │
+│  │  │  - Listen to MemberJoin events                  │    │     │
+│  │  │  - Listen to MemberImageUpdate events           │    │     │
 │  │  │  - Orchestrate container lifecycle              │    │     │
 │  │  └────────────────────┬────────────────────────────┘    │     │
 │  │                       │                                 │     │
@@ -105,7 +105,7 @@ Dashboard → MetaMask (sign transaction)
   ↓
 MetaMask → Blockchain (addMember())
   ↓
-Blockchain emits MemberAdded event
+Blockchain emits MemberJoin event
   ↓
 Backend listens → detects event
   ↓
@@ -120,7 +120,7 @@ Dashboard → MetaMask (sign transaction)
   ↓
 MetaMask → Blockchain (addImage())
   ↓
-Blockchain emits ImageAdded event
+Blockchain emits MemberImageUpdate event
   ↓
 Backend listens → detects event
   ↓

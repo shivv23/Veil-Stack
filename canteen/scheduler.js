@@ -1,10 +1,11 @@
 import { Web3 } from 'web3'
 import fs from 'fs'
 import path from 'path'
-const Canteen = JSON.parse(fs.readFileSync(path.resolve('./build/contracts/Canteen.json'), 'utf-8'))
+const Canteen = JSON.parse(fs.readFileSync(path.resolve('./dashboard/src/Canteen.json'), 'utf-8'))
 import Docker from 'dockerode'
 import _ from 'lodash'
 import Cluster from './cluster.js'
+import ipfs from './ipfs-service.js'
 
 class CanteenScheduler {
   async start(provider, contractAddress, privateKey, dockerPath, readOnlyMode = false) {
@@ -46,7 +47,8 @@ class CanteenScheduler {
       }
     }
 
-    const docker = new Docker({socketPath: dockerPath})
+    const dockerOpts = process.env.DOCKER_HOST ? { host: process.env.DOCKER_HOST } : { socketPath: dockerPath }
+    const docker = new Docker(dockerOpts)
 
     this.docker = docker
     this.contract = contract
@@ -253,6 +255,12 @@ class CanteenScheduler {
       async function finished() {
         console.log('')
 
+        // Pin image manifest to IPFS
+        try {
+          const imageInfo = await this.docker.getImage(scheduledImage).inspect()
+          await ipfs.pinImageManifest(scheduledImage, imageInfo)
+        } catch (_) {}
+
         const containers = await this.docker.listContainers()
 
         console.log(`Starting up a container with the image '${scheduledImage}'.`)
@@ -327,6 +335,21 @@ class CanteenScheduler {
           await container.start()
 
           console.log(`Node and scheduler is ready. Container ID is: ${container.id}`)
+
+          // Pin container metadata to IPFS
+          try {
+            const inspect = await container.inspect()
+            await ipfs.pinContainerMetadata({
+              id: container.id,
+              image: scheduledImage,
+              name: inspect.Name,
+              state: inspect.State?.Status,
+              ports: inspect.NetworkSettings?.Ports,
+              created: inspect.Created,
+              host: Cluster.getHost(),
+              peerId: Cluster.getProtocol()?.peerId?.toString()
+            })
+          } catch (_) {}
 
           this.container = container
         }

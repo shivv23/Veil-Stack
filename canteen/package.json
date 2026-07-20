@@ -8,7 +8,6 @@
     "deploy": "node deploy.js",
     "test": "truffle test",
     "console": "truffle console",
-    "setup": "./setup-metamask.sh",
     "compile": "truffle compile",
     "migrate:sepolia": "truffle migrate --network sepolia",
     "migrate:filecoin": "truffle migrate --network filecoin",
@@ -27,10 +26,9 @@
     "dockerode": "^4.0.2",
     "dotenv": "^16.6.1",
     "express": "^4.19.2",
-    "helia": "^4.2.1",
+    "@pinata/sdk": "^2.1.0",
     "libp2p": "^1.2.0",
     "lodash": "^4.17.21",
-    "orbit-db": "^0.28.2",
     "web3": "^4.10.0"
   },
   "devDependencies": {

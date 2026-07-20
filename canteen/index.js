@@ -4,6 +4,7 @@ import scheduler from './scheduler.js'
 import Web3 from 'web3'
 import web from './web-server.js'
 import { getActiveChain, validateConfig, SERVER_CONFIG } from './config.js'
+import ipfs from './ipfs-service.js'
 
 const args = _.reduce(process.argv.slice(2), (args, arg) => {
   const [k, v = true] = arg.split('=')
@@ -18,6 +19,9 @@ const nodes = args.nodes && args.nodes.split(',') || []
 // Validate configuration
 const { warnings } = validateConfig()
 warnings.forEach(warning => console.log(warning))
+
+// Initialize IPFS pinning service
+ipfs.init()
 
 // Get active chain configuration
 const activeChain = getActiveChain()
