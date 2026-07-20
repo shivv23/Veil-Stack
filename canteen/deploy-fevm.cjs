@@ -1,5 +1,7 @@
 const HDWalletProvider = require('@truffle/hdwallet-provider')
 const { Web3 } = require('web3')
+const fs = require('fs')
+const path = require('path')
 const Canteen = require('./build/contracts/Canteen.json')
 require('dotenv').config()
 
@@ -56,6 +58,12 @@ async function main() {
   console.log(`📝 Contract: ${receipt.options.address}`)
   console.log(`🔗 Tx: ${receipt.transactionHash}`)
   console.log(`🔍 Verify: https://calibration.filfox.info/en/address/${receipt.options.address}`)
+
+  // Copy ABI to dashboard
+  const src = path.resolve('./build/contracts/Canteen.json')
+  const dest = path.resolve('./dashboard/src/Canteen.json')
+  fs.copyFileSync(src, dest)
+  console.log('📋 ABI copied to dashboard/src/Canteen.json')
 
   provider.engine.stop()
 }

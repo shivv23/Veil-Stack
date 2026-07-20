@@ -272,5 +272,3 @@ Open http://localhost:3001
 - Schedule multiple images with different replica counts via dashboard
 - Run multiple nodes to see container distribution
 - Monitor cluster state via health endpoint or dashboard visualization
-- Check [E2E_TESTING.md](E2E_TESTING.md) for detailed troubleshooting
-- Check [SOLIDITY_UPGRADE.md](SOLIDITY_UPGRADE.md) for contract upgrade details

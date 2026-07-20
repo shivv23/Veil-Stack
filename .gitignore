@@ -2,3 +2,14 @@
 .env
 node_modules/
 build/
+.vercel
+
+# Working documents
+/check.md
+/check-old.md
+/*BUDGET_*.md
+/TEAM_CAREER_SUMMARY.md
+/TEAM_CAREER_SUMMARY_SUBMISSION.md
+/demov.pdf
+/demov_cleaned.txt
+/pr_body.md

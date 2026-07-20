@@ -105,8 +105,8 @@ class App extends Component {
   constructor(props) {
     super(props)
 
-  const CONTRACT_ADDRESS = process.env.REACT_APP_ETH_CONTRACT_ADDRESS || '0xCONTRACT_ADDRESS'
-    const PROVIDER_URL = process.env.REACT_APP_ETH_RPC_URL || 'http://localhost:8545'
+  const CONTRACT_ADDRESS = process.env.REACT_APP_FIL_CONTRACT_ADDRESS || '0xCONTRACT_ADDRESS'
+    const PROVIDER_URL = process.env.REACT_APP_FIL_RPC_URL || 'https://api.calibration.node.glif.io/rpc/v1'
     this.CLUSTER_URL = process.env.REACT_APP_CLUSTER_URL || 'http://localhost:5001/cluster'
 
     this.state = {
@@ -227,7 +227,7 @@ class App extends Component {
     node.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', 0)
-      .style('font-family', 'ProximaNova')
+      .style('font-family', 'Inter')
       .style('font-size', '1.25em')
       .style('font-weight', 600)
       .style('fill', 'white')
@@ -236,7 +236,7 @@ class App extends Component {
     node.append('text')
       .attr('text-anchor', 'middle')
       .attr('dy', 16)
-      .style('font-family', 'ProximaNova')
+      .style('font-family', 'Inter')
       .style('font-size', '0.8em')
       .style('font-weight', 600)
       .style('fill', '#e1e1e1')
@@ -300,10 +300,10 @@ class App extends Component {
         metaMaskChainId: parseInt(chainId, 16)
       })
 
-      // Check if on correct network (Sepolia = 11155111)
-      const expectedChainId = parseInt(process.env.REACT_APP_ETH_CHAIN_ID || '11155111')
+      // Check if on correct network (Filecoin Calibration = 314159)
+      const expectedChainId = parseInt(process.env.REACT_APP_FIL_CHAIN_ID || '314159')
       if (parseInt(chainId, 16) !== expectedChainId) {
-        alert(`Please switch to Sepolia testnet (Chain ID: ${expectedChainId})`)
+        alert(`Please switch to Filecoin Calibration (Chain ID: ${expectedChainId})`)
       }
 
       console.log('✅ MetaMask connected:', accounts[0])
