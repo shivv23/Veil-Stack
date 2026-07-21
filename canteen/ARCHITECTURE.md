@@ -31,7 +31,7 @@
 │      │  - addImage()                        │                  │
 │      │  - addMember()                       │                  │
 │      │  - getImages()                       │                  │
-│      │  - Events: MemberJoin, MemberLeave, MemberImageUpdate │
+│      │  - Events: MemberJoin, MemberLeave, MemberImageUpdate    │
 │      └────────────────┬─────────────────────┘                  │
 │                       │                                        │
 └───────────────────────┼────────────────────────────────────────┘
@@ -52,8 +52,7 @@
 │  │                                                         │     │
 │  │  ┌─────────────────────────────────────────────────┐    │     │
 │  │  │         Scheduler (Event-Driven)                │    │     │
-│  │  │  - Listen to MemberJoin events                  │    │     │
-│  │  │  - Listen to MemberImageUpdate events           │    │     │
+│  │  │  - Listen to MemberJoin, MemberLeave, MemberImageUpdate events  │
 │  │  │  - Orchestrate container lifecycle              │    │     │
 │  │  └────────────────────┬────────────────────────────┘    │     │
 │  │                       │                                 │     │

@@ -3,6 +3,5 @@ html, body, #root {
   padding: 0;
   width: 100%;
   height: 100%;
-
-  font-family: 'Inter', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
