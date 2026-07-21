@@ -236,7 +236,7 @@ npm test
 
 ## Tech Stack
 
-- **Solidity 0.8.20**: Smart contracts
+- **Solidity 0.8.20** (pragma `^0.8.0`): Smart contracts
 - **libp2p**: P2P cluster networking
 - **Web3.js v4**: Blockchain interaction
 - **Docker API**: Container orchestration
