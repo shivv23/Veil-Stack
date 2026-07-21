@@ -1,1 +1,1 @@
-truffle-config.cjs
+module.exports = require('./truffle-config.cjs');
