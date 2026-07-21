@@ -4,7 +4,7 @@ COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 COPY public/ public/
 COPY src/ src/
-RUN npm run build
+RUN NODE_OPTIONS=--openssl-legacy-provider npm run build
 
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
