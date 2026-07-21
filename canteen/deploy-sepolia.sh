@@ -1,6 +1,8 @@
 #!/bin/bash
 
-echo "🚀 Canteen Sepolia Deployment Script"
+echo "⚠️  NOTE: Sepolia deployment is secondary. Filecoin Calibration is the primary chain."
+echo "    See canteen/docs/FEVM_CALIBRATION_SETUP.md for the primary deployment guide."
+echo ""
 echo "====================================="
 echo ""
 
