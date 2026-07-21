@@ -22,7 +22,7 @@ Your configuration is ready! Follow these steps to deploy on Sepolia testnet.
 
 ### Step 2: Add Recovery Phrase to .env
 
-Edit `canteen/.env`:
+Edit `.env` in the canteen directory:
 
 Find the line:
 ```env
