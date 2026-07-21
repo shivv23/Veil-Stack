@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # Local Ethereum node (for dev/test clouds — start with --profile dev)
   ganache:
