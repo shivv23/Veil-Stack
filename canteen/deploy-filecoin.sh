@@ -14,7 +14,7 @@ if grep -q "MNEMONIC=$" .env || ! grep -q "MNEMONIC=" .env; then
     echo "   RPC URL: https://api.calibration.node.glif.io/rpc/v1"
     echo "   Chain ID: 314159"
     echo "   Currency Symbol: tFIL"
-    echo "3. Get free tFIL: https://filfox.io/faucet"
+    echo "3. Get free tFIL: https://faucet.calibration.fildev.network"
     echo "4. Get your seed phrase: MetaMask > Settings > Security & Privacy > Reveal"
     echo "5. Add to .env: MNEMONIC=\"word1 word2 ... word12\""
     exit 1
@@ -55,7 +55,7 @@ else
     echo "❌ Deployment failed"
     echo ""
     echo "Common issues:"
-    echo "- Insufficient tFIL (get from https://filfox.io/faucet)"
+    echo "- Insufficient tFIL (get from https://faucet.calibration.fildev.network)"
     echo "- Invalid MNEMONIC in .env"
     echo "- Network connection issues"
 fi

@@ -3,7 +3,7 @@
 
 # Veil Stack: Decentralized Container Orchestrator — Every Workload Originates a Paid Filecoin Storage Deal
 
-Veil Stack is a **decentralized container orchestration platform** that connects container scheduling to **paid Filecoin storage deals**. Node coordination runs over **libp2p**, cluster state is governed by an **FEVM smart contract** (Canteen.sol) deployed on **Filecoin Calibration**, and each deployment manifest is pinned to **IPFS**.
+Veil Stack is a **decentralized container orchestration platform** that connects container scheduling to **paid Filecoin storage deals**. Node coordination runs over **libp2p**, cluster state is governed by an **FEVM smart contract** (Canteen.sol) deployed on **Filecoin Calibration**, and each deployment manifest is pinned to **IPFS**. A planned FHE layer will enable confidential scheduling for regulated workloads.
 
 Looking ahead, every scheduled workload will automatically originate a Filecoin deal:
 
@@ -25,7 +25,7 @@ Filecoin's storage market needs **programmatic, recurring demand**. Veil Stack s
 | Filecoin deals are mostly manual, one-off | Every container deployment **is designed to** automatically propose, monitor, and renew deals |
 | FEVM is underutilized beyond simple storage contracts | Canteen.sol on FEVM proves real-time scheduling logic on Filecoin |
 | Decentralized cloud lacks a verifiable storage substrate | IPFS CID pinning + Filecoin deal anchoring = tamper-evident image delivery |
-| Multi-organization clusters need trust-minimized coordination | libp2p federation + FEVM governance enable cross-org clusters |
+| Regulated workloads need confidentiality | Planned FHE encryption for scheduling on ciphertext |
 
 ---
 
@@ -153,6 +153,18 @@ REACT_APP_IPFS_URL=http://localhost:5001/ipfs
 
 ---
 
+### Zama FHE — Planned Confidential Scheduling Layer
+
+Veil Stack plans to support encrypted scheduling inputs using **Zama's Universal FHE SDK** for zero-trust and regulated environments:
+
+- **Encrypted telemetry**: Nodes encrypt CPU, memory, and disk metrics before gossiping via libp2p heartbeats
+- **Ciphertext scheduling**: Scheduling cost functions execute on encrypted inputs — no node sees another's raw metrics
+- **Toggle-able**: `VEIL_FHE_MODE=enabled|disabled` — plaintext scheduling is the default; FHE is ON for sensitive clusters
+
+This is a **planned feature** for clusters that need confidentiality (healthcare, defense, cross-cloud ML). The core Filecoin deal pipeline works without it.
+
+---
+
 ### Key Capabilities
 
 | Capability | Description |
@@ -163,8 +175,20 @@ REACT_APP_IPFS_URL=http://localhost:5001/ipfs
 | **Docker container runtime** | Pull, create, start, stop, remove containers via Docker Engine API |
 | **React + D3 dashboard** | Web3-connected, Filecoin Calibration-native, token-gated |
 | **IPFS deployment pinning** | Verifiable deployment manifest storage via Pinata |
+| **Confidential scheduling (FHE)** | Planned Zama FHE encrypted telemetry and scheduling for regulated workloads |
 | **CID-verified retrieval** | Tamper-evident image pulling with on-chain deal commitment verification _(planned)_ |
 | **Multi-provider deal fallback** | Automatic re-proposal if a storage provider goes offline _(planned)_ |
+
+---
+
+### Example Use Cases
+
+| Use Case | Why Veil Stack |
+|---|---|
+| **Decentralized cloud compute** | Container orchestration with automatic Filecoin deal origination — every workload creates storage demand |
+| **Regulated workloads** | Planned FHE layer keeps scheduling metrics encrypted; audit trail on-chain via FEVM |
+| **Cross-org compute cooperatives** | libp2p federation + FEVM governance enable multi-org clusters without trust |
+| **AI/ML training pipelines** | Large model artifacts stored on Filecoin, verified before each training run |
 
 ---
 
