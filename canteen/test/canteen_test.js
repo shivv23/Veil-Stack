@@ -1,19 +1,14 @@
-import { BN } from 'web3-utils';
+const { BN } = require('web3-utils');
 const Canteen = artifacts.require("Canteen");
+const chai = require('chai');
+const chaiAsPromised = require('chai-as-promised');
+chai.use(chaiAsPromised);
+const should = chai.should();
 
 contract('Canteen', accounts => {
   let canteen = null;
   const owner = accounts[0];
   const purchaser = accounts[1];
-  let chai, should;
-
-  // Dynamically import and configure Chai
-  before(async () => {
-    chai = await import('chai');
-    const chaiAsPromised = await import('chai-as-promised');
-    chai.use(chaiAsPromised.default);
-    should = chai.should();
-  });
 
   beforeEach(async function() {
     canteen = await Canteen.new({ from: owner, gas: 3000000 });
