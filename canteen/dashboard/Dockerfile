@@ -2,7 +2,7 @@ FROM node:18-alpine AS build
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
-RUN node -e "const fs=require('fs');const p='node_modules/web3/package.json';const pkg=JSON.parse(fs.readFileSync(p));pkg.main='src/index.js';fs.writeFileSync(p,JSON.stringify(pkg))"
+RUN echo 'module.exports = require("../src/index.js");' > node_modules/web3/dist/web3.min.js
 COPY public/ public/
 COPY src/ src/
 RUN NODE_OPTIONS=--openssl-legacy-provider npm run build
