@@ -20,7 +20,11 @@ jobs:
         with:
           node-version: 18
       - run: npm install
-      - run: npx truffle test --config truffle-config.cjs
+      - run: |
+          npx ganache --port 8545 --deterministic &
+          sleep 5
+          npx truffle test --config truffle-config.cjs
+          kill %1 2>/dev/null || true
 
   compose:
     name: Docker compose build
