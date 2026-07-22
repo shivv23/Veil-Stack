@@ -1,6 +1,6 @@
 # canteen.
 
-A decentralized container orchestrating system (Kubernetes), running on Ethereum. 
+A decentralized container orchestrating system (Kubernetes), running on FEVM (Filecoin EVM).
 
 The modern tech startup/enterprise is comprised of tens or hundreds or even thousands of crucial technical components such as databases, backends, replicas of databases, stream processing platforms, etc.
 
