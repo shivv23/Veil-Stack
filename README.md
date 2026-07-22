@@ -182,7 +182,7 @@ Open the dashboard at `https://veil-stack-canteen.vercel.app/dashboard/` and con
 
 ```bash
 # Clone the repository
-git clone https://github.com/seetadev/Veil-Stack.git
+git clone https://github.com/shivv23/Veil-Stack.git
 cd Veil-Stack/canteen
 
 # Install dependencies
