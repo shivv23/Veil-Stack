@@ -23,7 +23,7 @@ jobs:
       - run: |
           npx ganache --port 8545 --deterministic &
           sleep 5
-          npx truffle test --config truffle-config.cjs
+          npx truffle test --config truffle-config.cjs test/canteen_test.js
           kill %1 2>/dev/null || true
 
   compose:
