@@ -8,8 +8,9 @@ The long-term vision: link every scheduled workload to a **paid Filecoin storage
 
 - **Repository**: https://github.com/shivv23/Veil-Stack
 - **License**: MIT
-- **Deployed Contract**: [`0x04dEf60e2853E4d654b366cd8103F929c456d4b7`](https://calibration.filfox.info/en/address/0x04dEf60e2853E4d654b366cd8103F929c456d4b7) on FEVM Calibration
+- **Deployed Contract**: [`0x1731f4A5CC4c2f9a542389A42714aF7A1000f449`](https://calibration.filfox.info/en/address/0x1731f4A5CC4c2f9a542389A42714aF7A1000f449) on FEVM Calibration
 - **Live Dashboard**: https://veil-stack-canteen.vercel.app/dashboard/
+- **CI**: GitHub Actions (contract tests + Docker compose build) — passing
 
 ---
 
@@ -30,14 +31,20 @@ Veil Stack solves these by moving governance on-chain (FEVM), networking to libp
 
 | Component | What Exists | Evidence |
 |---|---|---|
-| **Canteen.sol (FEVM)** | Smart contract: member management, image registry, replica balancing, port mapping | Deployed on Calibration, verified on Filfox |
+| **Canteen.sol (FEVM)** | Smart contract: member management, image registry, replica balancing, port mapping, **status reporting** | Deployed on Calibration, [verified on Filfox](https://calibration.filfox.info/en/address/0x1731f4A5CC4c2f9a542389A42714aF7A1000f449) |
+| **On-chain feedback loop** | Scheduler reports container state (running/stopped/crashed) back to contract via `reportStatus()` | Implemented in `scheduler.js` |
 | **Web Dashboard** | React + D3 force-directed cluster visualization, MetaMask integration, contract state reader | Live on Vercel |
 | **libp2p Cluster** | TCP transport, Noise encryption, mplex, mDNS/bootstrap discovery, GossipSub heartbeat gossip | Working in `cluster.js` |
-| **Docker Runtime** | Pull, create, start, stop, remove containers via Docker Engine API | Working in `scheduler.js` |
-| **Event-Driven Scheduler** | Listens for MemberJoin, MemberLeave, MemberImageUpdate on-chain events, manages container lifecycle | Working in `scheduler.js` |
+| **Docker Runtime** | Pull, create, start, stop, remove containers via Docker Engine API; **resource limits** (512MB RAM, 50% CPU) | Working in `scheduler.js` |
+| **Event-Driven Scheduler** | Listens for MemberJoin, MemberLeave, MemberImageUpdate, **StatusReport** on-chain events | Working in `scheduler.js` |
+| **Health Checks** | Container status reported on-chain; `getMemberStatus(host)` returns image + state + timestamp | Working |
+| **REST API** | `/status`, `/containers`, `/cluster`, `/ipfs` endpoints for backend introspection | Working in `web-server.js` |
+| **CLI Tool** | `veilstack` — status, containers, nodes, add-image, remove-image commands | Working in `veilstack.js` |
 | **IPFS Pinning** | Deployment manifests pinned to IPFS via Pinata for verifiable records | Working in `ipfs-service.js` |
-| **Docker Compose Stack** | Ganache (local dev), Socket Proxy, Canteen Node, Dashboard — one-command local setup | `docker-compose.yml` |
-| **CI/CD** | GitHub Actions: contract tests (Ganache + Truffle), Docker Compose build | `.github/workflows/test.yml` |
+| **Docker Compose** | One-command local deployment with Docker socket proxy | `docker-compose.yml` |
+| **CI/CD** | GitHub Actions: contract tests (Ganache + Truffle), Docker Compose build | `.github/workflows/test.yml` — passing |
+| **Integration Tests** | 5 end-to-end tests against live backend (status, cluster, containers, lifecycle) | `test/integration_test.js` |
+| **Contract Tests** | 16 tests covering membership, images, ports, status reporting, event emission, node count | `test/canteen_test.js` |
 
 ### Smart Contract: Canteen.sol
 
@@ -47,9 +54,30 @@ Key functions:
 - addImage(name, replicas) / removeImage() — container registry
 - rebalanceWithUnfortunateImage()          — ratio-based replica scheduling
 - addPortForImage() / getPortsForImage()   — port mapping
+- reportStatus(host, image, state)         — on-chain status reporting (NEW)
+- getMemberStatus(host)                    — read node health (NEW)
+- getNodeCount()                           — count active members (NEW)
 ```
 
-Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate` — consumed by the scheduler off-chain.
+Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — consumed by the scheduler off-chain.
+
+### Feedback Loop Flow
+
+```
+┌──────────┐     MemberJoin      ┌──────────────┐    docker pull    ┌──────────┐
+│  FEVM    │ ──────────────────► │  Scheduler   │ ───────────────► │  Docker  │
+│ Contract │                     │  (libp2p)    │                  │  Host    │
+│          │ ◄────────────────── │              │                  │          │
+│          │   reportStatus()    │              │  container up    │          │
+└──────────┘                     └──────────────┘                  └──────────┘
+     │
+     │  StatusReport event
+     ▼
+┌──────────┐
+│  Other   │  (observes cluster state via event log)
+│  Nodes   │
+└──────────┘
+```
 
 ### Architecture
 
@@ -64,15 +92,48 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate` — consumed by the sch
    Veil Node A   Veil Node B   Veil Node C
    (libp2p)      (libp2p)      (libp2p)
    + scheduler   + scheduler   + scheduler
+   + health      + health      + health
+   checks        checks        checks
         │           │           │
         ▼           ▼           ▼
    Docker Host   Docker Host   Docker Host
+   (512MB,       (512MB,       (512MB,
+    50% CPU)      50% CPU)      50% CPU)
         │           │           │
         └───────────┼───────────┘
                     ▼
             Filecoin Network
        (Calibration → Mainnet)
 ```
+
+---
+
+## Prior Art & Differentiation
+
+| Project | Approach | Veil Stack Difference |
+|---|---|---|
+| **Kubernetes** | Centralized control plane (etcd + scheduler + API server) | No central control plane; governance on FEVM smart contract; libp2p for peer coordination |
+| **Docker Swarm** | Built into Docker; manager nodes with Raft consensus | On-chain membership via FEVM; container state reported to smart contract for auditability |
+| **Nomad (HashiCorp)** | Centralized scheduler with plugin architecture | Decentralized scheduling with on-chain events; Filecoin storage deal integration (planned) |
+| **K3s** | Lightweight Kubernetes for edge | Still requires centralized server; Veil Stack nodes are fully autonomous peers |
+| **Akash Network** | Decentralized compute marketplace on Cosmos | Akash uses own chain; Veil Stack leverages FEVM + Filecoin storage for verifiable deployment records |
+| **Flux (RunOnFlux)** | Decentralized compute on Zcash | Flux uses proprietary infrastructure; Veil Stack uses open standards (libp2p, FEVM, IPFS) |
+
+**Key differentiator**: Veil Stack is the only orchestrator that combines on-chain governance (FEVM), decentralized networking (libp2p), verifiable storage (IPFS/Filecoin), and planned confidential computing (FHE) in a single platform.
+
+---
+
+## Risk Analysis
+
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| **FEVM contract bugs** | Medium | High | Extensive test suite (16 contract tests); CI enforced; plan external audit in M4 |
+| **Filecoin mainnet instability** | Low | High | Calibration testnet for all development; mainnet migration only after stability confirmed |
+| **libp2p NAT traversal failures** | Medium | Medium | mDNS for local networks; bootstrap peers for public; relay circuit as fallback |
+| **Docker socket access security** | Low | High | Docker socket proxy (tecnativa); resource limits enforced; read-only mode available |
+| **FHE performance overhead** | High | Medium | FHE is optional toggle; plaintext scheduling default; performance benchmarks planned |
+| **Team bandwidth** | Medium | Medium | Milestones are sequential; P0 items already delivered; FHE can slip without blocking V2 |
+| **Filecoin storage provider availability** | Medium | Medium | Multi-provider fallback planned in M2; provider rotation with exponential backoff |
 
 ---
 
@@ -181,6 +242,30 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate` — consumed by the sch
 
 ---
 
+## Test Coverage
+
+### Contract Tests (`test/canteen_test.js`)
+
+| Category | Tests | Coverage |
+|---|---|---|
+| Initial state | 1 | Zero members, zero images |
+| Member lifecycle | 1 | Add/remove members, image assignment |
+| Image management | 1 | Add/remove images, rebalancing, port mapping |
+| Status reporting | 5 | reportStatus, getMemberStatus, event emission, non-member rejection, cleanup on removal |
+| Node counting | 1 | getNodeCount accuracy across add/remove |
+
+### Integration Tests (`test/integration_test.js`)
+
+| Test | What it verifies |
+|---|---|
+| GET /status | Valid JSON with container info, Docker status |
+| GET /cluster | Peer info, members array, multiaddrs |
+| GET /containers | Container list structure, Docker availability |
+| Container lifecycle | Running state reported when container is up |
+| Docker detection | Backend correctly detects Docker availability |
+
+---
+
 ## Team
 
 - **Sumanjeet** — Smart contract development, FEVM integration
@@ -191,6 +276,6 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate` — consumed by the sch
 ## Links
 
 - Repository: https://github.com/shivv23/Veil-Stack
-- Contract: https://calibration.filfox.info/en/address/0x04dEf60e2853E4d654b366cd8103F929c456d4b7
+- Contract: https://calibration.filfox.info/en/address/0x1731f4A5CC4c2f9a542389A42714aF7A1000f449
 - Dashboard: https://veil-stack-canteen.vercel.app/dashboard/
 - License: MIT
