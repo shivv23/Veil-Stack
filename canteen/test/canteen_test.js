@@ -89,4 +89,65 @@ contract('Canteen', accounts => {
       new BN(details[1][1]).eq(new BN(50)).should.be.true;
     });
   });
+
+  describe('Status Reporting:', () => {
+    it('should report and read node status', async function() {
+      await canteen.addMember("host1");
+
+      const status = await canteen.getMemberStatus("host1");
+      status[0].should.be.equal('');
+      status[1].should.be.equal('');
+
+      await canteen.reportStatus("host1", "nginx:latest", "running");
+
+      const updatedStatus = await canteen.getMemberStatus("host1");
+      updatedStatus[0].should.be.equal('nginx:latest');
+      updatedStatus[1].should.be.equal('running');
+      new BN(updatedStatus[2]).toNumber().should.be.above(0);
+    });
+
+    it('should emit StatusReport event', async function() {
+      await canteen.addMember("host1");
+
+      const tx = await canteen.reportStatus("host1", "nginx:latest", "running");
+      tx.logs[0].event.should.equal('StatusReport');
+      tx.logs[0].args.host.should.equal('host1');
+      tx.logs[0].args.image.should.equal('nginx:latest');
+      tx.logs[0].args.state.should.equal('running');
+    });
+
+    it('should reject status from non-member', async function() {
+      await canteen.reportStatus("unknown-host", "nginx:latest", "running")
+        .should.be.rejectedWith('revert');
+    });
+
+    it('should clear status when member is removed', async function() {
+      await canteen.addMember("host1");
+      await canteen.reportStatus("host1", "nginx:latest", "running");
+
+      const before = await canteen.getMemberStatus("host1");
+      before[0].should.be.equal('nginx:latest');
+
+      await canteen.removeMember("host1");
+
+      const after = await canteen.getMemberStatus("host1");
+      after[0].should.be.equal('');
+      after[1].should.be.equal('');
+    });
+
+    it('getNodeCount should return active members', async function() {
+      const countBefore = await canteen.getNodeCount();
+      new BN(countBefore).eq(new BN(0)).should.be.true;
+
+      await canteen.addMember("host1");
+      await canteen.addMember("host2");
+
+      const countAfter = await canteen.getNodeCount();
+      new BN(countAfter).eq(new BN(2)).should.be.true;
+
+      await canteen.removeMember("host1");
+      const countRemoved = await canteen.getNodeCount();
+      new BN(countRemoved).eq(new BN(1)).should.be.true;
+    });
+  });
 });

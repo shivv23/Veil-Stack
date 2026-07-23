@@ -108,12 +108,14 @@ class App extends Component {
   const CONTRACT_ADDRESS = process.env.REACT_APP_FIL_CONTRACT_ADDRESS || '0xCONTRACT_ADDRESS'
     const PROVIDER_URL = process.env.REACT_APP_FIL_RPC_URL || 'https://api.calibration.node.glif.io/rpc/v1'
     this.CLUSTER_URL = process.env.REACT_APP_CLUSTER_URL || 'http://localhost:5001/cluster'
+    this.STATUS_URL = (process.env.REACT_APP_CLUSTER_URL || 'http://localhost:5001').replace('/cluster', '') + '/status'
 
     this.state = {
       status: 'connecting...',
       contract: CONTRACT_ADDRESS,
       images: [],
       nodes: [],
+      containerStatus: { image: '', state: 'unknown', lastReported: 0 },
       image: {
         add: {
           imageName: '',
@@ -258,6 +260,24 @@ class App extends Component {
     }
 
     this.setState({images: deployedImages, nodes})
+
+    // Fetch container status from backend
+    try {
+      const statusRes = await fetch(this.STATUS_URL)
+      const statusData = await statusRes.json()
+      this.setState({ containerStatus: statusData.container || { image: '', state: 'unknown', lastReported: 0 } })
+    } catch (e) {
+      // Backend may not be running
+    }
+
+    // Poll container status every 10 seconds
+    this.statusInterval = setInterval(async () => {
+      try {
+        const statusRes = await fetch(this.STATUS_URL)
+        const statusData = await statusRes.json()
+        this.setState({ containerStatus: statusData.container || { image: '', state: 'unknown', lastReported: 0 } })
+      } catch (e) {}
+    }, 10000)
   }
 
   updateNode(selection) {
@@ -347,7 +367,7 @@ class App extends Component {
 
       await this.contract.methods.addMember(nodeAddress).send({
         from: this.state.metaMaskAccount,
-        gas: 300000
+        gas: 15000000
       })
       
       alert(`✅ Node registered successfully!\n\nNode: ${nodeAddress}\n\nThe backend will detect this in ~15 seconds and start scheduling containers.`)
@@ -377,7 +397,7 @@ class App extends Component {
     try {
       await this.contract.methods.addImage(imageName, reps).send({
         from: this.state.metaMaskAccount,
-        gas: 500000
+        gas: 15000000
       })
       alert('✅ Image added successfully!')
     } catch (error) {
@@ -397,7 +417,7 @@ class App extends Component {
     try {
       await this.contract.methods.removeImage(imageName).send({
         from: this.state.metaMaskAccount,
-        gas: 500000
+        gas: 15000000
       })
       alert('✅ Image removed successfully!')
     } catch (error) {
@@ -407,7 +427,7 @@ class App extends Component {
   }
 
   render() {
-    const {status, images, contract, nodes, metaMaskConnected, metaMaskAccount, metaMaskChainId} = this.state
+    const {status, images, contract, nodes, metaMaskConnected, metaMaskAccount, metaMaskChainId, containerStatus} = this.state
 
     return (
       <Page>
@@ -450,6 +470,14 @@ class App extends Component {
             <StatusColumn style={{flex: 2}}><Label>deployed:</Label> {images.length == 0 && 'N/A' || images.join(', ')}
             </StatusColumn>
             <StatusColumn><Label>num servers:</Label> {nodes.length}</StatusColumn>
+          </StatusContainer>
+
+          <StatusContainer style={{backgroundColor: containerStatus.state === 'running' ? '#d4edda' : containerStatus.state === 'crashed' ? '#f8d7da' : '#fff3cd'}}>
+            <StatusColumn><Label>container:</Label> {containerStatus.image || 'none'}</StatusColumn>
+            <StatusColumn><Label>state:</Label> {containerStatus.state}</StatusColumn>
+            {containerStatus.lastReported > 0 && (
+              <StatusColumn><Label>last report:</Label> {new Date(containerStatus.lastReported).toLocaleTimeString()}</StatusColumn>
+            )}
           </StatusContainer>
 
           <Graph>
