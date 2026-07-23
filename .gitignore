@@ -13,3 +13,5 @@ build/
 /demov.pdf
 /demov_cleaned.txt
 /pr_body.md
+*.pptx
+generate_ppt.py
