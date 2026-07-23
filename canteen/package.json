@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "veilstack": "./veilstack.js"
+  },
   "scripts": {
     "start": "node index.js",
     "deploy": "node deploy.js",
