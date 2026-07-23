@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 import Web3 from 'web3'
 import Canteen from './build/contracts/Canteen.json'
 
