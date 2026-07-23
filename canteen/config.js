@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * Multi-chain configuration for Canteen
  * Supports Ethereum and Filecoin networks
