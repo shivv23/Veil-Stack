@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 import { createLibp2p } from 'libp2p'
 import { tcp } from '@libp2p/tcp'
 import { noise } from '@chainsafe/libp2p-noise'
@@ -8,9 +9,12 @@ import { gossipsub } from '@chainsafe/libp2p-gossipsub'
 import { identify } from '@libp2p/identify'
 import { EventEmitter } from 'events'
 import _ from 'lodash'
+import createLogger from './logger.js'
 
-const HEARTBEAT_INTERVAL = 5000 // 5 seconds
-const PEER_TIMEOUT = 15000 // 15 seconds
+const log = createLogger('cluster')
+
+const HEARTBEAT_INTERVAL = 5000
+const PEER_TIMEOUT = 15000
 const HEARTBEAT_TOPIC = '/canteen/heartbeat/1.0.0'
 
 class CanteenCluster extends EventEmitter {
@@ -18,7 +22,7 @@ class CanteenCluster extends EventEmitter {
     super()
     this.host = null
     this.node = null
-    this.peers = new Map() // peerId -> { lastSeen, host }
+    this.peers = new Map()
     this.heartbeatInterval = null
   }
 
@@ -31,7 +35,6 @@ class CanteenCluster extends EventEmitter {
   }
 
   getMembers() {
-    // Return array of active peer hosts
     const now = Date.now()
     const activeMembers = []
     
@@ -48,7 +51,6 @@ class CanteenCluster extends EventEmitter {
     this.host = `127.0.0.1:${port}`
     
     try {
-      // Configure libp2p
       const libp2pConfig = {
         addresses: {
           listen: [`/ip4/0.0.0.0/tcp/${port}`]
@@ -66,20 +68,17 @@ class CanteenCluster extends EventEmitter {
         peerDiscovery: []
       }
 
-      // Add mDNS for local discovery
       libp2pConfig.peerDiscovery.push(mdns({
         interval: 1000
       }))
 
-      // Add bootstrap peers if provided
       if (bootstrapNodes.length > 0) {
-        // Convert host:port format to multiaddr format
         const bootstrapAddrs = bootstrapNodes
           .map(node => {
             const [host, port] = node.split(':')
             return `/ip4/${host}/tcp/${port}`
           })
-          .filter(addr => addr !== `/ip4/127.0.0.1/tcp/${port}`) // Don't bootstrap to self
+          .filter(addr => addr !== `/ip4/127.0.0.1/tcp/${port}`)
 
         if (bootstrapAddrs.length > 0) {
           libp2pConfig.peerDiscovery.push(bootstrap({
@@ -88,61 +87,49 @@ class CanteenCluster extends EventEmitter {
         }
       }
 
-      // Create libp2p node
       this.node = await createLibp2p(libp2pConfig)
 
-      // Set up event listeners
       this._setupEventListeners()
 
-      // Start the node
       await this.node.start()
       
-      console.log(`Libp2p node started with PeerId: ${this.node.peerId.toString()}`)
-      console.log(`Listening on addresses:`)
-      this.node.getMultiaddrs().forEach(addr => {
-        console.log(`  ${addr.toString()}`)
+      log.info('libp2p node started', {
+        peerId: this.node.peerId.toString(),
+        addresses: this.node.getMultiaddrs().map(a => a.toString())
       })
 
-      // Subscribe to heartbeat topic
-  await this.node.services.pubsub.subscribe(HEARTBEAT_TOPIC)
+      await this.node.services.pubsub.subscribe(HEARTBEAT_TOPIC)
 
-      // Start heartbeat broadcasting
       this._startHeartbeat()
-
-      // Start peer pruning
       this._startPeerPruning()
 
-      console.log(`Cluster initialized. Bootstrap nodes: ${bootstrapNodes.length > 0 ? bootstrapNodes.join(', ') : 'None (mDNS only)'}`)
+      log.info('cluster initialized', { bootstrapNodes: bootstrapNodes.length || 0 })
       
     } catch (error) {
-      console.error('Failed to start libp2p node:', error)
+      log.error('libp2p startup failed', { error: error.message })
       throw error
     }
   }
 
   _setupEventListeners() {
-    // Peer discovery
     this.node.addEventListener('peer:discovery', (evt) => {
       const peerId = evt.detail.id.toString()
-      console.log(`Discovered peer: ${peerId}`)
+      log.debug('peer discovered', { peerId })
     })
 
-    // Peer connection
     this.node.addEventListener('peer:connect', (evt) => {
       const peerId = evt.detail.toString()
-      console.log(`Connected to peer: ${peerId}`)
+      log.info('peer connected', { peerId })
       this._updatePeer(peerId, null)
       this._logClusterMembers()
     })
 
-    // Peer disconnection
     this.node.addEventListener('peer:disconnect', (evt) => {
       const peerId = evt.detail.toString()
-      console.log(`Disconnected from peer: ${peerId}`)
+      log.info('peer disconnected', { peerId })
       this._logClusterMembers()
     })
 
-    // Handle incoming heartbeat messages
     this.node.services.pubsub.addEventListener('message', (evt) => {
       if (evt.detail.topic === HEARTBEAT_TOPIC) {
         try {
@@ -153,7 +140,7 @@ class CanteenCluster extends EventEmitter {
             this._updatePeer(peerId, message.host)
           }
         } catch (error) {
-          console.error('Error processing heartbeat message:', error)
+          log.error('heartbeat parse failed', { error: error.message })
         }
       }
     })
@@ -186,12 +173,12 @@ class CanteenCluster extends EventEmitter {
 
         const pubsub = this.node.services?.pubsub
         if (!pubsub) {
-          console.warn('Pubsub service not ready; skipping heartbeat')
+          log.warn('pubsub not ready, skipping heartbeat')
           return
         }
         await pubsub.publish(HEARTBEAT_TOPIC, new TextEncoder().encode(message))
       } catch (error) {
-        console.error('Error sending heartbeat:', error)
+        log.error('heartbeat failed', { error: error.message })
       }
     }, HEARTBEAT_INTERVAL)
   }
@@ -210,7 +197,7 @@ class CanteenCluster extends EventEmitter {
       }
 
       if (removedPeers.length > 0) {
-        console.log(`Pruned ${removedPeers.length} inactive peer(s)`)
+        log.info('pruned inactive peers', { count: removedPeers.length })
         this._logClusterMembers()
       }
     }, HEARTBEAT_INTERVAL)
@@ -218,7 +205,7 @@ class CanteenCluster extends EventEmitter {
 
   _logClusterMembers() {
     const members = this.getMembers()
-    console.log(`Cluster members: ${members.length > 0 ? '[' + members.join(', ') + ']' : 'None.'}`)
+    log.debug('cluster members', { count: members.length, members })
   }
 
   async stop() {
@@ -230,7 +217,7 @@ class CanteenCluster extends EventEmitter {
     if (this.node) {
       try { await this.node.services.pubsub.unsubscribe(HEARTBEAT_TOPIC) } catch (e) {}
       await this.node.stop()
-      console.log('Libp2p node stopped')
+      log.info('libp2p node stopped')
     }
 
     this.peers.clear()

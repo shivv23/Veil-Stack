@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 import _ from 'lodash'
 import cluster from './cluster.js'
 import scheduler from './scheduler.js'
@@ -5,6 +6,9 @@ import Web3 from 'web3'
 import web from './web-server.js'
 import { getActiveChain, validateConfig, SERVER_CONFIG } from './config.js'
 import ipfs from './ipfs-service.js'
+import createLogger from './logger.js'
+
+const log = createLogger('main')
 
 const args = _.reduce(process.argv.slice(2), (args, arg) => {
   const [k, v = true] = arg.split('=')
@@ -16,72 +20,69 @@ const port = args.port || SERVER_CONFIG.port
 const webPort = args.webPort || SERVER_CONFIG.webPort
 const nodes = args.nodes && args.nodes.split(',') || []
 
-// Validate configuration
 const { warnings } = validateConfig()
-warnings.forEach(warning => console.log(warning))
+warnings.forEach(w => log.warn(w))
 
-// Initialize IPFS pinning service
 ipfs.init()
 
-// Get active chain configuration
 const activeChain = getActiveChain()
 
-console.log('\n🚀 Starting Canteen Node')
-console.log('========================')
-console.log(`⛓️  Chain: ${activeChain.name}`)
-console.log(`📡 RPC: ${activeChain.rpcUrl}`)
-console.log(`📄 Contract: ${activeChain.contractAddress}`)
-console.log(`🔌 Port: ${port}`)
-console.log(`🌐 Web Port: ${webPort}`)
-console.log('========================\n')
+log.info('starting canteen node', {
+  chain: activeChain.name,
+  rpc: activeChain.rpcUrl,
+  contract: activeChain.contractAddress,
+  port,
+  webPort
+})
 
-// Start cluster with libp2p
 cluster.start(port, nodes).then(() => {
-  console.log('✅ Cluster started successfully')
+  log.info('cluster started')
 
-  // Start scheduler in READ-ONLY mode (no private key)
-  // Transactions will be signed via MetaMask frontend
   scheduler.start(
     new Web3.providers.HttpProvider(activeChain.rpcUrl),
     activeChain.contractAddress,
-    null, // No private key - MetaMask will handle signing
-    undefined, // Docker path (auto-detect)
-    true // Read-only mode
+    null,
+    undefined,
+    true
   )
 
-  // Start web server with scheduler reference for container status
   web.start(Number(webPort), scheduler)
 
-  // Listen for cluster membership changes
   cluster.on('memberJoin', (peerId) => {
-    console.log(`New member joined: ${peerId}`)
+    log.info('member joined', { peerId })
   })
 
   cluster.on('memberLeave', (peerId) => {
-    console.log(`Member left: ${peerId}`)
+    log.info('member left', { peerId })
   })
 }).catch(error => {
-  console.error('Failed to start cluster:', error)
+  log.error('cluster startup failed', { error: error.message })
   process.exit(1)
 })
 
-process.stdin.resume()
+let shuttingDown = false
 
-// Graceful shutdown
-const cleanup = async () => {
-  console.log('\nShutting down gracefully...')
-  
+const shutdown = async (signal) => {
+  if (shuttingDown) return
+  shuttingDown = true
+
+  log.info('shutdown initiated', { signal })
+
   try {
     await scheduler.cleanup()
     await cluster.stop()
-    console.log('Cleanup completed')
+    log.info('cleanup completed')
     process.exit(0)
   } catch (error) {
-    console.error('Error during cleanup:', error)
+    log.error('cleanup failed', { error: error.message })
     process.exit(1)
   }
 }
 
-process.on('exit', cleanup)
-process.on('SIGINT', cleanup)
-process.on('SIGTERM', cleanup)
+process.on('SIGINT', () => shutdown('SIGINT'))
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('exit', () => {
+  if (!shuttingDown) log.info('process exiting')
+})
+
+process.stdin.resume()

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 import { Web3 } from 'web3'
 import fs from 'fs'
 const artifact = JSON.parse(fs.readFileSync('./build/contracts/Canteen.json'))

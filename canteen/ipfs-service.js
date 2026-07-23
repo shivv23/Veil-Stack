@@ -1,6 +1,9 @@
+// SPDX-License-Identifier: MIT
 import pinataSDK from '@pinata/sdk'
 import fs from 'fs'
-import path from 'path'
+import createLogger from './logger.js'
+
+const log = createLogger('ipfs')
 
 class IPFSService {
   constructor() {
@@ -13,13 +16,13 @@ class IPFSService {
     const secretKey = process.env.PINATA_SECRET_KEY
 
     if (!apiKey || !secretKey) {
-      console.log('⚠️  IPFS pinning disabled (set PINATA_API_KEY and PINATA_SECRET_KEY)')
+      log.info('IPFS pinning disabled (set PINATA_API_KEY and PINATA_SECRET_KEY)')
       return
     }
 
     this.pinata = new pinataSDK({ apiKey, secretKey })
     this.enabled = true
-    console.log('✅ IPFS pinning enabled via Pinata')
+    log.info('IPFS pinning enabled via Pinata')
   }
 
   async pinJSON(name, data) {
@@ -30,10 +33,10 @@ class IPFSService {
         pinataMetadata: { name },
         pinataOptions: { cidVersion: 1 }
       })
-      console.log(`📌 Pinned JSON to IPFS: ${result.IpfsHash}`)
+      log.info('JSON pinned to IPFS', { cid: result.IpfsHash, name })
       return result.IpfsHash
     } catch (error) {
-      console.error(`❌ IPFS pin failed for ${name}:`, error.message)
+      log.error('IPFS pin failed', { name, error: error.message })
       return null
     }
   }
@@ -47,10 +50,10 @@ class IPFSService {
         pinataMetadata: { name },
         pinataOptions: { cidVersion: 1 }
       })
-      console.log(`📌 Pinned file to IPFS: ${result.IpfsHash}`)
+      log.info('file pinned to IPFS', { cid: result.IpfsHash, name })
       return result.IpfsHash
     } catch (error) {
-      console.error(`❌ IPFS pin failed for ${name}:`, error.message)
+      log.error('IPFS pin failed', { name, error: error.message })
       return null
     }
   }
@@ -115,7 +118,7 @@ class IPFSService {
         timestamp: pin.date_pinned
       }))
     } catch (error) {
-      console.error('❌ Failed to list IPFS pins:', error.message)
+      log.error('failed to list IPFS pins', { error: error.message })
       return []
     }
   }
@@ -125,10 +128,10 @@ class IPFSService {
 
     try {
       await this.pinata.unpin(cid)
-      console.log(`📌 Unpinned from IPFS: ${cid}`)
+      log.info('unpinned from IPFS', { cid })
       return true
     } catch (error) {
-      console.error(`❌ IPFS unpin failed for ${cid}:`, error.message)
+      log.error('IPFS unpin failed', { cid, error: error.message })
       return false
     }
   }

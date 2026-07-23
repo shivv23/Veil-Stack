@@ -1,12 +1,17 @@
+// SPDX-License-Identifier: MIT
 import cluster from './cluster.js'
 import express from 'express'
 import http from 'http'
 import ipfs from './ipfs-service.js'
+import createLogger from './logger.js'
+
+const log = createLogger('web')
 
 class WebServer {
   start(port = 3000, schedulerRef = null) {
     const app = express()
     this.scheduler = schedulerRef
+    this.startTime = Date.now()
 
     const clusterDetails = (req, res) => {
       const node = cluster.getProtocol()
@@ -41,6 +46,16 @@ class WebServer {
 
     app.get('/', clusterDetails)
     app.get('/cluster', clusterDetails)
+
+    app.get('/health', (req, res) => {
+      const uptime = Math.floor((Date.now() - this.startTime) / 1000)
+      res.status(200).json({
+        status: 'ok',
+        uptime,
+        version: '0.2.0',
+        timestamp: new Date().toISOString()
+      })
+    })
 
     app.get('/status', (req, res) => {
       if (!this.scheduler) {
@@ -126,12 +141,13 @@ class WebServer {
     try {
       const server = http.createServer(app)
       server.on('error', err => {
-        console.error(err)
+        log.error('server error', { error: err.message })
       })
-      server.listen(port)
-      console.log(`Cluster health check web service is listening on port ${port}`)
+      server.listen(port, () => {
+        log.info('web server started', { port })
+      })
     } catch (error) {
-      console.log(error.message)
+      log.error('web server startup failed', { error: error.message })
     }
   }
 }

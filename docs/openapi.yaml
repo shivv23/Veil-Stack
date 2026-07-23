@@ -1,0 +1,282 @@
+openapi: 3.0.3
+info:
+  title: Veil Stack REST API
+  description: Backend introspection API for Veil Stack decentralized container orchestrator
+  version: 0.2.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5001
+    description: Local development
+
+paths:
+  /status:
+    get:
+      summary: Get node status
+      description: Returns the current state of this Veil Stack node including container status, Docker availability, and read-only mode.
+      operationId: getStatus
+      responses:
+        '200':
+          description: Node status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeStatus'
+              example:
+                host: "127.0.0.1:5000"
+                container:
+                  image: "nginx:latest"
+                  state: "running"
+                  lastReported: 1700000000000
+                docker: true
+                readOnlyMode: true
+                registered: true
+
+  /containers:
+    get:
+      summary: List Docker containers
+      description: Returns all Docker containers managed by this node's scheduler.
+      operationId: getContainers
+      responses:
+        '200':
+          description: Container list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerList'
+
+  /cluster:
+    get:
+      summary: Get cluster topology
+      description: Returns libp2p cluster information including peer ID, connected members, and multiaddrs.
+      operationId: getCluster
+      responses:
+        '200':
+          description: Cluster topology
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterInfo'
+              example:
+                host: "127.0.0.1:5000"
+                peerId: "12D3KooW..."
+                members: ["127.0.0.1:5000", "127.0.0.1:5002"]
+                connections: 2
+                peers: 1
+                multiaddrs:
+                  - "/ip4/0.0.0.0/tcp/5000"
+
+  /health:
+    get:
+      summary: Health check
+      description: Returns uptime and version information for monitoring and load balancers.
+      operationId: getHealth
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+              example:
+                status: "ok"
+                uptime: 3600
+                version: "0.2.0"
+
+  /ipfs:
+    get:
+      summary: List IPFS pins
+      description: Returns pinned IPFS records. Requires Pinata configuration.
+      operationId: listPins
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Filter by name
+      responses:
+        '200':
+          description: Pin list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pins:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IPFSPin'
+                  count:
+                    type: integer
+        '503':
+          description: IPFS not configured
+
+    post:
+      summary: Pin JSON to IPFS
+      description: Pins a JSON object to IPFS via Pinata. Requires Pinata configuration.
+      operationId: pinJSON
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - data
+              properties:
+                name:
+                  type: string
+                data:
+                  type: object
+      responses:
+        '200':
+          description: Pinned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cid:
+                    type: string
+                  name:
+                    type: string
+        '503':
+          description: IPFS not configured
+
+  /ipfs/{cid}:
+    delete:
+      summary: Unpin from IPFS
+      description: Removes a pinned CID from IPFS via Pinata.
+      operationId: unpin
+      parameters:
+        - name: cid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Unpin result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+components:
+  schemas:
+    NodeStatus:
+      type: object
+      properties:
+        host:
+          type: string
+        container:
+          type: object
+          properties:
+            image:
+              type: string
+            state:
+              type: string
+              enum: [idle, running, stopped, crashed, pending, no-scheduler]
+            lastReported:
+              type: number
+        docker:
+          type: boolean
+        readOnlyMode:
+          type: boolean
+        registered:
+          type: boolean
+
+    ContainerList:
+      type: object
+      properties:
+        containers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              image:
+                type: string
+              name:
+                type: string
+              state:
+                type: string
+              status:
+                type: string
+              ports:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    private:
+                      type: integer
+                    public:
+                      type: integer
+                      nullable: true
+                    type:
+                      type: string
+              created:
+                type: number
+        dockerAvailable:
+          type: boolean
+
+    ClusterInfo:
+      type: object
+      properties:
+        host:
+          type: string
+        peerId:
+          type: string
+        members:
+          type: array
+          items:
+            type: string
+        connections:
+          type: integer
+        peers:
+          type: integer
+        multiaddrs:
+          type: array
+          items:
+            type: string
+
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+        uptime:
+          type: number
+          description: Uptime in seconds
+        version:
+          type: string
+
+    IPFSPin:
+      type: object
+      properties:
+        cid:
+          type: string
+        name:
+          type: string
+        size:
+          type: integer
+        timestamp:
+          type: string
