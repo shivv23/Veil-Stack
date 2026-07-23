@@ -49,8 +49,8 @@ cluster.start(port, nodes).then(() => {
     true // Read-only mode
   )
 
-  // Start web server (configurable port)
-  web.start(Number(webPort))
+  // Start web server with scheduler reference for container status
+  web.start(Number(webPort), scheduler)
 
   // Listen for cluster membership changes
   cluster.on('memberJoin', (peerId) => {

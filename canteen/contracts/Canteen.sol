@@ -7,6 +7,12 @@ contract Canteen {
         bool active;
     }
 
+    struct Status {
+        string image;
+        string state; // "running", "stopped", "crashed"
+        uint lastReported;
+    }
+
     struct Image {
         uint replicas;
         uint deployed;
@@ -18,10 +24,12 @@ contract Canteen {
     event MemberJoin(string host);
     event MemberLeave(string host);
     event MemberImageUpdate(string host, string image);
+    event StatusReport(string host, string image, string state, uint timestamp);
 
     mapping(bytes32 => Member) memberDetails;
     string[] public members;
 
+    mapping(bytes32 => Status) memberStatus;
     mapping(bytes32 => Image) imageDetails;
     string[] public images;
     mapping (bytes32 => uint[2][]) exposedPortsForImages;
@@ -54,15 +62,17 @@ contract Canteen {
 
         string memory affectedImage = memberDetails[hashedHost].imageName;
 
-        imageDetails[keccak256(abi.encodePacked(affectedImage))].deployed -= 1;
+        if (bytes(affectedImage).length > 0) {
+            imageDetails[keccak256(abi.encodePacked(affectedImage))].deployed -= 1;
+        }
         memberDetails[hashedHost] = Member("", false);
+        delete memberStatus[hashedHost];
 
         emit MemberLeave(host);
 
-        // Need to rebalance
-        // Eg. (A, 4), (B, 4) are two images. We have 4 members, and we remove 2
-        // We now have A A null null -> We would need A B null null
-        rebalanceWithUnfortunateImage(affectedImage);
+        if (bytes(affectedImage).length > 0) {
+            rebalanceWithUnfortunateImage(affectedImage);
+        }
     }
 
     function addImage(string memory name, uint replicas) public restricted {
@@ -100,7 +110,7 @@ contract Canteen {
         exposedPortsForImages[keccak256(abi.encodePacked(name))].push([from, to]);
     }
 
-    function getPortsForImage(string memory name) public view restricted returns (uint[2][] memory) {
+    function getPortsForImage(string memory name) public view returns (uint[2][] memory) {
         return exposedPortsForImages[keccak256(abi.encodePacked(name))];
     }
 
@@ -208,5 +218,28 @@ contract Canteen {
 
     function getImagesCount() public view returns (uint) {
         return images.length;
+    }
+
+    function reportStatus(string memory host, string memory image, string memory state) public {
+        bytes32 hashedHost = keccak256(abi.encodePacked(host));
+        require(memberDetails[hashedHost].active, "Member not active");
+
+        memberStatus[hashedHost] = Status(image, state, block.timestamp);
+        emit StatusReport(host, image, state, block.timestamp);
+    }
+
+    function getMemberStatus(string memory host) public view returns (string memory, string memory, uint) {
+        Status storage status = memberStatus[keccak256(abi.encodePacked(host))];
+        return (status.image, status.state, status.lastReported);
+    }
+
+    function getNodeCount() public view returns (uint) {
+        uint count = 0;
+        for (uint i = 0; i < members.length; i++) {
+            if (memberDetails[keccak256(abi.encodePacked(members[i]))].active) {
+                count++;
+            }
+        }
+        return count;
     }
 }

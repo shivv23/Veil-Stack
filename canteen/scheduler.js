@@ -10,45 +10,61 @@ import ipfs from './ipfs-service.js'
 class CanteenScheduler {
   async start(provider, contractAddress, privateKey, dockerPath, readOnlyMode = false) {
     const web3 = new Web3(provider)
-    
+
     this.readOnlyMode = readOnlyMode || !privateKey
-    
+    this.containerStatus = { image: '', state: 'idle', lastReported: 0 }
+    this.containerHealthCheck = null
+
     let acct, fromAddress
-    
+
     if (!this.readOnlyMode) {
-      // Legacy mode: Use private key for auto-registration
       acct = web3.eth.accounts.privateKeyToAccount(privateKey)
       web3.eth.accounts.wallet.add(acct)
       fromAddress = acct.address
       console.log('🔑 Scheduler running in LEGACY mode with private key')
     } else {
-      // Read-only mode: No private key, listen to events only
       console.log('👁️  Scheduler running in READ-ONLY mode')
       console.log('📱 Node registration must be done via MetaMask frontend')
-      fromAddress = null // No account needed for read-only
+      fromAddress = null
     }
 
-    // Instantiate contract
     const contract = new web3.eth.Contract(Canteen.abi, contractAddress, fromAddress ? { from: fromAddress } : {})
 
-    // Auto-detect Docker socket path
     if (!dockerPath) {
-      const desktopSocket = `${process.env.HOME}/.docker/desktop/docker.sock`
-      const defaultSocket = '/var/run/docker.sock'
-      
-      if (fs.existsSync(desktopSocket)) {
-        dockerPath = desktopSocket
-        console.log('Using Docker Desktop socket:', dockerPath)
-      } else if (fs.existsSync(defaultSocket)) {
-        dockerPath = defaultSocket
-        console.log('Using default Docker socket:', dockerPath)
+      const isWin = process.platform === 'win32'
+
+      if (isWin) {
+        const winPipe = '//./pipe/docker_engine'
+        dockerPath = winPipe
+        console.log('Using Windows named pipe:', winPipe)
       } else {
-        throw new Error('Could not find Docker socket. Is Docker running?')
+        const desktopSocket = `${process.env.HOME}/.docker/desktop/docker.sock`
+        const defaultSocket = '/var/run/docker.sock'
+
+        if (fs.existsSync(desktopSocket)) {
+          dockerPath = desktopSocket
+          console.log('Using Docker Desktop socket:', dockerPath)
+        } else if (fs.existsSync(defaultSocket)) {
+          dockerPath = defaultSocket
+          console.log('Using default Docker socket:', dockerPath)
+        } else {
+          if (!readOnlyMode) {
+            throw new Error('Could not find Docker socket. Is Docker running?')
+          }
+          console.log('⚠️  Docker socket not found — running in read-only event mode')
+        }
       }
     }
 
-    const dockerOpts = process.env.DOCKER_HOST ? { host: process.env.DOCKER_HOST } : { socketPath: dockerPath }
-    const docker = new Docker(dockerOpts)
+    let dockerOpts
+    if (process.env.DOCKER_HOST) {
+      dockerOpts = { host: process.env.DOCKER_HOST }
+    } else if (process.platform === 'win32') {
+      dockerOpts = { socketPath: '//./pipe/docker_engine' }
+    } else {
+      dockerOpts = { socketPath: dockerPath }
+    }
+    const docker = dockerPath ? new Docker(dockerOpts) : null
 
     this.docker = docker
     this.contract = contract
@@ -58,26 +74,65 @@ class CanteenScheduler {
 
     try {
       if (!this.readOnlyMode) {
-        // Legacy mode: Auto-register node
         await this.registerNode()
-        setInterval(async () => await this.loop(), 1000)
-      } else {
-        // Read-only mode: Just listen to events
-        console.log('⏳ Waiting for node registration via MetaMask...')
+        this._startLoop()
         this.listenToEvents()
+      } else {
+        this.listenToEvents()
+        await this._bootstrapOnRestart()
       }
     } catch (error) {
       console.error(error)
     }
-
-    // await this.updateScheduler('rethinkdb:latest')
-    // await this.updateScheduler('crccheck/hello-world')
   }
 
-  /**
-   * Listen to contract events (Read-only mode)
-   * Uses polling since HTTP provider doesn't support subscriptions
-   */
+  _startLoop() {
+    if (!this.loopInterval) {
+      console.log('🔄 Starting scheduling loop (1s interval)')
+      this.loopInterval = setInterval(async () => {
+        try {
+          await this.loop()
+        } catch (error) {
+          console.error('❌ Loop iteration error:', error.message)
+        }
+      }, 1000)
+    }
+  }
+
+  _stopLoop() {
+    if (this.loopInterval) {
+      clearInterval(this.loopInterval)
+      this.loopInterval = null
+      console.log('⏹️  Scheduling loop stopped')
+    }
+  }
+
+  async _bootstrapOnRestart() {
+    const host = Cluster.getHost()
+    if (!host) return
+
+    try {
+      const details = await this.contract.methods.getMemberDetails(host).call()
+      const isActive = details && details['1'] === true
+      const assignedImage = details ? details['0'] : ''
+
+      if (isActive) {
+        console.log(`✅ Node already registered on-chain as ${host}`)
+        if (assignedImage.length > 0) {
+          console.log(`📦 Assigned image: ${assignedImage} — starting scheduling loop`)
+        } else {
+          console.log('📭 No image assigned yet — starting loop to watch for assignments')
+        }
+        this._startLoop()
+      } else {
+        console.log('⏳ Node not registered on-chain — waiting for MetaMask registration')
+      }
+    } catch (error) {
+      console.log('⚠️  Could not check on-chain registration:', error.message)
+      console.log('⏳ Will start loop on first MemberJoin event')
+    }
+  }
+
   listenToEvents() {
     if (!this.contract) {
       console.error('❌ Contract not initialized')
@@ -86,14 +141,11 @@ class CanteenScheduler {
 
     console.log('👂 Polling for contract events (HTTP provider)...')
     console.log('ℹ️  Checking for new events every 15 seconds')
-    
-    // Track last processed block
+
     this.lastProcessedBlock = 0
-    
-    // Initialize and start polling
+
     this.pollForEvents()
-    
-    // Poll every 15 seconds
+
     this.eventPollingInterval = setInterval(() => {
       this.pollForEvents()
     }, 15000)
@@ -101,46 +153,37 @@ class CanteenScheduler {
 
   async pollForEvents() {
     try {
-      // Get current block number
-      const currentBlock = await this.web3.eth.getBlockNumber()
-      
-      // First time, just set the starting block
+      const currentBlock = Number(await this.web3.eth.getBlockNumber())
+
       if (this.lastProcessedBlock === 0) {
-        this.lastProcessedBlock = Number(currentBlock) - 1
+        this.lastProcessedBlock = currentBlock - 1
         console.log(`✅ Started monitoring from block ${this.lastProcessedBlock}`)
         return
       }
 
-      // Get events from last processed block to current
+      if (currentBlock <= this.lastProcessedBlock) return
+
       const events = await this.contract.getPastEvents('allEvents', {
         fromBlock: this.lastProcessedBlock + 1,
         toBlock: currentBlock
       })
 
-      // Process each event
       for (const event of events) {
         console.log(`📡 Event detected: ${event.event} (Block ${event.blockNumber})`)
-        
+
         if (event.event === 'MemberJoin') {
           const { host } = event.returnValues
           console.log(`➕ MemberJoin: ${host}`)
           if (host === Cluster.getHost()) {
             console.log('✅ This node has been registered!')
-            // Start the scheduling loop
-            if (!this.loopInterval) {
-              this.loopInterval = setInterval(async () => await this.loop(), 1000)
-            }
+            this._startLoop()
           }
         } else if (event.event === 'MemberLeave') {
           const { host } = event.returnValues
           console.log(`➖ MemberLeave: ${host}`)
           if (host === Cluster.getHost()) {
             console.log('This node has been removed')
-            // Stop the scheduling loop
-            if (this.loopInterval) {
-              clearInterval(this.loopInterval)
-              this.loopInterval = null
-            }
+            this._stopLoop()
             await this.cleanup()
           }
         } else if (event.event === 'MemberImageUpdate') {
@@ -148,52 +191,45 @@ class CanteenScheduler {
           console.log(`🔄 MemberImageUpdate: ${host} -> ${image}`)
           if (host === Cluster.getHost()) {
             console.log(`📦 New image assigned to this node: ${image}`)
-            // The loop will pick this up automatically
+          }
+        } else if (event.event === 'StatusReport') {
+          const { host, image, state } = event.returnValues
+          if (host !== Cluster.getHost()) {
+            console.log(`📋 StatusReport from ${host}: ${image} (${state})`)
           }
         }
       }
 
-      // Update last processed block
-      this.lastProcessedBlock = Number(currentBlock)
-      
+      this.lastProcessedBlock = currentBlock
+
     } catch (error) {
       console.error('❌ Error polling events:', error.message)
     }
   }
 
   async loop() {
-    // Loops to check if scheduled image for this given node changed.
+    const { contract } = this
 
-  const {contract, web3} = this
-
-    // In web3 v4, when a Solidity function isn't explicitly marked view/constant,
-    // .call() may require a from address. Provide it to avoid "Contract \"from\" address not specified".
     const details = await contract.methods
       .getMemberDetails(Cluster.getHost())
       .call({ from: this.accountAddress })
     const scheduledImage = details['0']
 
-    // Check if scheduled image is available.
     if (!details) return
-    // Check if scheduled image is unique.
     if (this.scheduledImage === scheduledImage) return
 
     if (this.scheduledImage && this.scheduledImage.length > 0 && scheduledImage.length === 0) {
-      // Node no longer has to schedule. Clean up.
-
       await this.cleanup()
     } else {
-      // Update image.
       await this.updateScheduler(scheduledImage)
     }
   }
 
   async registerNode() {
-    const {contract, account, web3} = this
+    const { contract, account, web3 } = this
 
     const host = Cluster.getHost()
 
-    // Pre-check membership to avoid revert on re-register
     try {
       const details = await contract.methods.getMemberDetails(host).call({ from: account.address })
       const isActive = details && (details['1'] === true)
@@ -212,7 +248,6 @@ class CanteenScheduler {
       await registerMember.send({
         from: account.address,
         gas,
-        // Ganache CLI v6 is legacy (no EIP-1559). Provide a legacy gasPrice.
         gasPrice: await web3.eth.getGasPrice()
       })
 
@@ -228,9 +263,94 @@ class CanteenScheduler {
     }
   }
 
+  _setContainerStatus(image, state) {
+    this.containerStatus = { image, state, lastReported: Date.now() }
+    console.log(`📊 Container status: ${image || 'none'} (${state})`)
+  }
+
+  getContainerStatus() {
+    return this.containerStatus
+  }
+
+  async _reportStatus(image, state) {
+    this._setContainerStatus(image, state)
+
+    if (!this.readOnlyMode && this.account) {
+      try {
+        const contract = new this.web3.eth.Contract(
+          Canteen.abi,
+          this.contract.options.address,
+          { from: this.account.address }
+        )
+        await contract.methods
+          .reportStatus(Cluster.getHost(), image, state)
+          .send({
+            from: this.account.address,
+            gas: 200000,
+            gasPrice: await this.web3.eth.getGasPrice()
+          })
+        console.log(`📤 On-chain status reported: ${image} (${state})`)
+      } catch (error) {
+        const msg = (error.message || '').toLowerCase()
+        if (msg.includes('is not a function') || msg.includes('method does not exist') || msg.includes('revert')) {
+          console.log(`ℹ️  On-chain reportStatus not available on this contract version (off-chain tracking active)`)
+        } else {
+          console.log(`⚠️  Could not report status on-chain: ${error.message}`)
+        }
+      }
+    }
+  }
+
+  _startContainerHealthCheck(container, scheduledImage) {
+    if (this.containerHealthCheck) {
+      clearInterval(this.containerHealthCheck)
+    }
+
+    this.containerHealthCheck = setInterval(async () => {
+      try {
+        if (!container) return
+        const inspect = await container.inspect()
+        const running = inspect.State.Running
+
+        if (!running && this.scheduledImage === scheduledImage) {
+          console.log(`⚠️  Container ${container.id.substring(0, 12)} is not running (state: ${inspect.State.Status})`)
+          this._setContainerStatus(scheduledImage, 'crashed')
+
+          if (inspect.State.Restarting) {
+            console.log('🔄 Docker restart policy is restarting the container...')
+          } else {
+            console.log('🔄 Container stopped unexpectedly — restarting...')
+            try {
+              await container.start()
+              console.log('✅ Container restarted successfully')
+              this._setContainerStatus(scheduledImage, 'running')
+            } catch (restartErr) {
+              console.error('❌ Failed to restart container:', restartErr.message)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Health check error:', error.message)
+      }
+    }, 10000)
+  }
+
+  _stopContainerHealthCheck() {
+    if (this.containerHealthCheck) {
+      clearInterval(this.containerHealthCheck)
+      this.containerHealthCheck = null
+    }
+  }
+
   async updateScheduler(scheduledImage) {
     this.scheduledImage = scheduledImage
     if (this.scheduledImage.length === 0) return
+
+    if (!this.docker) {
+      console.log(`📦 Would deploy '${scheduledImage}' but Docker is not available`)
+      this._setContainerStatus(scheduledImage, 'pending')
+      return
+    }
 
     this.docker.pull(scheduledImage, (err, stream) => {
       if (err) {
@@ -255,7 +375,6 @@ class CanteenScheduler {
       async function finished() {
         console.log('')
 
-        // Pin image manifest to IPFS
         try {
           const imageInfo = await this.docker.getImage(scheduledImage).inspect()
           await ipfs.pinImageManifest(scheduledImage, imageInfo)
@@ -273,7 +392,6 @@ class CanteenScheduler {
 
           let container
           if (!containerStatus) {
-            // Detect ports from contract mappings or Docker image metadata
             let ports = []
             try {
               const contractPorts = await this.contract.methods.getPortsForImage(scheduledImage).call()
@@ -312,18 +430,22 @@ class CanteenScheduler {
               ExposedPorts: exposedPorts,
               HostConfig: {
                 PortBindings: portBindings,
+                RestartPolicy: {
+                  Name: 'on-failure',
+                  MaximumRetryCount: 3
+                },
+                Memory: 512 * 1024 * 1024,
+                CpuPeriod: 100000,
+                CpuQuota: 50000
               }
             })
 
             console.log('Successfully created a new container and binded it to the scheduler.')
           } else {
-            // Get reference to the container.
-
             container = this.docker.getContainer(containerStatus['Id'])
             console.log('Found a stopped container; started it and binded it to the scheduler.')
           }
 
-          // Wipe out the old container.
           const oldContainer = this.container
           if (oldContainer) {
             console.log('Stopping and removing prior image binded to the scheduler.')
@@ -331,12 +453,13 @@ class CanteenScheduler {
             await oldContainer.remove()
           }
 
-          // Run the new (or paused) container.
           await container.start()
 
           console.log(`Node and scheduler is ready. Container ID is: ${container.id}`)
 
-          // Pin container metadata to IPFS
+          this._startContainerHealthCheck(container, scheduledImage)
+          await this._reportStatus(scheduledImage, 'running')
+
           try {
             const inspect = await container.inspect()
             await ipfs.pinContainerMetadata({
@@ -372,22 +495,29 @@ class CanteenScheduler {
   async cleanup() {
     console.log('Scheduler stopping; stopping and removing binded container.')
 
-    // Stop event polling
+    this._stopContainerHealthCheck()
+
     if (this.eventPollingInterval) {
       clearInterval(this.eventPollingInterval)
       this.eventPollingInterval = null
     }
 
     if (this.container) {
-      await this.container.stop()
-      await this.container.remove()
+      try {
+        await this._reportStatus(this.scheduledImage || '', 'stopped')
+      } catch (_) {}
+
+      try {
+        await this.container.stop()
+        await this.container.remove()
+      } catch (_) {}
 
       this.scheduledImage = ''
       this.container = null
     }
+
+    this._stopLoop()
   }
 }
 
-export default new
-
-CanteenScheduler()
+export default new CanteenScheduler()

@@ -4,8 +4,9 @@ import http from 'http'
 import ipfs from './ipfs-service.js'
 
 class WebServer {
-  start(port = 3000) {
+  start(port = 3000, schedulerRef = null) {
     const app = express()
+    this.scheduler = schedulerRef
 
     const clusterDetails = (req, res) => {
       const node = cluster.getProtocol()
@@ -41,7 +42,51 @@ class WebServer {
     app.get('/', clusterDetails)
     app.get('/cluster', clusterDetails)
 
-    // IPFS pinning endpoints
+    app.get('/status', (req, res) => {
+      if (!this.scheduler) {
+        return res.status(200).json({
+          host: cluster.getHost(),
+          container: { image: '', state: 'no-scheduler', lastReported: 0 },
+          docker: false
+        })
+      }
+
+      const containerStatus = this.scheduler.getContainerStatus()
+      res.status(200).json({
+        host: cluster.getHost(),
+        container: containerStatus,
+        docker: !!this.scheduler.docker,
+        readOnlyMode: this.scheduler.readOnlyMode,
+        registered: !!this.scheduler.scheduledImage
+      })
+    })
+
+    app.get('/containers', async (req, res) => {
+      if (!this.scheduler || !this.scheduler.docker) {
+        return res.status(200).json({ containers: [], dockerAvailable: false })
+      }
+
+      try {
+        const containers = await this.scheduler.docker.listContainers({ all: true })
+        const formatted = containers.map(c => ({
+          id: c.Id.substring(0, 12),
+          image: c.Image,
+          name: c.Names[0] || '',
+          state: c.State,
+          status: c.Status,
+          ports: c.Ports.map(p => ({
+            private: p.PrivatePort,
+            public: p.PublicPort || null,
+            type: p.Type
+          })),
+          created: c.Created
+        }))
+        res.status(200).json({ containers: formatted, dockerAvailable: true })
+      } catch (error) {
+        res.status(200).json({ containers: [], dockerAvailable: false, error: error.message })
+      }
+    })
+
     app.get('/ipfs', async (req, res) => {
       if (!ipfs.enabled) {
         return res.status(503).json({ error: 'IPFS pinning not configured' })
