@@ -30,8 +30,20 @@ Canteen.sol is deployed on Filecoin Calibration at [`0x1731f4A5CC4c2f9a542389A42
 | REST API (`/status`, `/containers`, `/cluster`, `/ipfs`) | Working |
 | CLI tool (`veilstack` — status, containers, nodes, add-image) | Working |
 | CI/CD (GitHub Actions: contract tests + Docker compose build) | Passing |
+| npm audit in CI | Passing |
 | Docker Compose (one-command local deployment) | Working |
 | Windows compatibility (Docker named pipe, cross-platform socket detection) | Working |
+| Structured logging (JSON, timestamps, component tags) | Working |
+| Graceful shutdown (SIGTERM/SIGINT handlers, container cleanup) | Working |
+| Health check endpoint (/health) | Working |
+| Pre-commit hooks (husky + lint-staged) | Working |
+| Lockfile (package-lock.json) | Committed |
+| CONTRIBUTING.md | Present |
+| SECURITY.md | Present |
+| CHANGELOG.md | Present |
+| Edge case documentation | Present |
+| Performance benchmarks | Present |
+| OpenAPI spec | Present |
 | **StorageDeal struct + deal proposal from addImage()** | **Planned (V2)** |
 | **Deal monitoring (proposed → active → expired/slashed)** | **Planned (V2)** |
 | **CID-verified image retrieval** | **Planned (V2)** |
@@ -95,6 +107,19 @@ Canteen.sol is deployed on Filecoin Calibration at [`0x1731f4A5CC4c2f9a542389A42
 
 ---
 
+### Documentation
+
+| Document | Description |
+|---|---|
+| **[CONTRIBUTING.md](./CONTRIBUTING.md)** | Development setup, code style, PR guidelines |
+| **[SECURITY.md](./SECURITY.md)** | Vulnerability reporting, threat model, known limitations |
+| **[CHANGELOG.md](./CHANGELOG.md)** | Version history and notable changes |
+| **[docs/EDGE_CASES.md](./docs/EDGE_CASES.md)** | Failure modes and recovery behavior at each layer |
+| **[docs/BENCHMARKS.md](./docs/BENCHMARKS.md)** | Performance measurements and scalability limits |
+| **[docs/openapi.yaml](./docs/openapi.yaml)** | OpenAPI 3.0 spec for REST API |
+
+---
+
 ### Feedback Loop
 
 Veil Stack implements a **closed feedback loop** between nodes and the on-chain contract:
@@ -114,6 +139,7 @@ This means cluster state is always verifiable on-chain — any observer can call
 
 | Endpoint | Method | Description |
 |---|---|---|
+| `GET /health` | GET | Health check: status, uptime, version |
 | `GET /status` | GET | Node status: host, container image/state, Docker availability, read-only mode |
 | `GET /containers` | GET | List all Docker containers managed by this node (id, image, name, state, ports) |
 | `GET /cluster` | GET | Cluster topology: host, peerId, peers, members, multiaddrs |
@@ -273,11 +299,15 @@ NODE_OPTIONS=--openssl-legacy-provider npm run build
 
 ```bash
 # Contract tests (requires Ganache)
-npx ganache --port 8545 --deterministic &
-npx truffle test --config truffle-config.cjs
+npm run ganache &
+sleep 3
+npm run test:contracts
 
 # Integration tests (requires running backend)
-node test/integration_test.js
+npm run test:integration
+
+# Security audit
+npm run audit
 ```
 
 ---

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 import { Web3 } from 'web3'
 import fs from 'fs'
 import path from 'path'
@@ -6,6 +7,9 @@ import Docker from 'dockerode'
 import _ from 'lodash'
 import Cluster from './cluster.js'
 import ipfs from './ipfs-service.js'
+import createLogger from './logger.js'
+
+const log = createLogger('scheduler')
 
 class CanteenScheduler {
   async start(provider, contractAddress, privateKey, dockerPath, readOnlyMode = false) {
@@ -14,6 +18,7 @@ class CanteenScheduler {
     this.readOnlyMode = readOnlyMode || !privateKey
     this.containerStatus = { image: '', state: 'idle', lastReported: 0 }
     this.containerHealthCheck = null
+    this.startTime = Date.now()
 
     let acct, fromAddress
 
@@ -21,11 +26,9 @@ class CanteenScheduler {
       acct = web3.eth.accounts.privateKeyToAccount(privateKey)
       web3.eth.accounts.wallet.add(acct)
       fromAddress = acct.address
-      console.log('🔑 Scheduler running in LEGACY mode with private key')
+      log.info('scheduler started', { mode: 'legacy', address: fromAddress })
     } else {
-      console.log('👁️  Scheduler running in READ-ONLY mode')
-      console.log('📱 Node registration must be done via MetaMask frontend')
-      fromAddress = null
+      log.info('scheduler started', { mode: 'read-only' })
     }
 
     const contract = new web3.eth.Contract(Canteen.abi, contractAddress, fromAddress ? { from: fromAddress } : {})
@@ -36,22 +39,22 @@ class CanteenScheduler {
       if (isWin) {
         const winPipe = '//./pipe/docker_engine'
         dockerPath = winPipe
-        console.log('Using Windows named pipe:', winPipe)
+        log.info('docker socket', { path: winPipe, platform: 'win32' })
       } else {
         const desktopSocket = `${process.env.HOME}/.docker/desktop/docker.sock`
         const defaultSocket = '/var/run/docker.sock'
 
         if (fs.existsSync(desktopSocket)) {
           dockerPath = desktopSocket
-          console.log('Using Docker Desktop socket:', dockerPath)
+          log.info('docker socket', { path: desktopSocket })
         } else if (fs.existsSync(defaultSocket)) {
           dockerPath = defaultSocket
-          console.log('Using default Docker socket:', dockerPath)
+          log.info('docker socket', { path: defaultSocket })
         } else {
           if (!readOnlyMode) {
             throw new Error('Could not find Docker socket. Is Docker running?')
           }
-          console.log('⚠️  Docker socket not found — running in read-only event mode')
+          log.warn('docker socket not found, running without Docker')
         }
       }
     }
@@ -82,18 +85,18 @@ class CanteenScheduler {
         await this._bootstrapOnRestart()
       }
     } catch (error) {
-      console.error(error)
+      log.error('startup failed', { error: error.message })
     }
   }
 
   _startLoop() {
     if (!this.loopInterval) {
-      console.log('🔄 Starting scheduling loop (1s interval)')
+      log.info('scheduling loop started', { interval: '1s' })
       this.loopInterval = setInterval(async () => {
         try {
           await this.loop()
         } catch (error) {
-          console.error('❌ Loop iteration error:', error.message)
+          log.error('loop iteration failed', { error: error.message })
         }
       }, 1000)
     }
@@ -103,7 +106,7 @@ class CanteenScheduler {
     if (this.loopInterval) {
       clearInterval(this.loopInterval)
       this.loopInterval = null
-      console.log('⏹️  Scheduling loop stopped')
+      log.info('scheduling loop stopped')
     }
   }
 
@@ -117,30 +120,23 @@ class CanteenScheduler {
       const assignedImage = details ? details['0'] : ''
 
       if (isActive) {
-        console.log(`✅ Node already registered on-chain as ${host}`)
-        if (assignedImage.length > 0) {
-          console.log(`📦 Assigned image: ${assignedImage} — starting scheduling loop`)
-        } else {
-          console.log('📭 No image assigned yet — starting loop to watch for assignments')
-        }
+        log.info('node registered on-chain', { host, image: assignedImage || '(none)' })
         this._startLoop()
       } else {
-        console.log('⏳ Node not registered on-chain — waiting for MetaMask registration')
+        log.info('node not registered, waiting for MetaMask registration', { host })
       }
     } catch (error) {
-      console.log('⚠️  Could not check on-chain registration:', error.message)
-      console.log('⏳ Will start loop on first MemberJoin event')
+      log.warn('could not check on-chain registration, waiting for MemberJoin', { error: error.message })
     }
   }
 
   listenToEvents() {
     if (!this.contract) {
-      console.error('❌ Contract not initialized')
+      log.error('contract not initialized')
       return
     }
 
-    console.log('👂 Polling for contract events (HTTP provider)...')
-    console.log('ℹ️  Checking for new events every 15 seconds')
+    log.info('event polling started', { interval: '15s' })
 
     this.lastProcessedBlock = 0
 
@@ -157,7 +153,7 @@ class CanteenScheduler {
 
       if (this.lastProcessedBlock === 0) {
         this.lastProcessedBlock = currentBlock - 1
-        console.log(`✅ Started monitoring from block ${this.lastProcessedBlock}`)
+        log.info('event monitoring started', { fromBlock: this.lastProcessedBlock })
         return
       }
 
@@ -169,33 +165,30 @@ class CanteenScheduler {
       })
 
       for (const event of events) {
-        console.log(`📡 Event detected: ${event.event} (Block ${event.blockNumber})`)
+        log.info('event received', { event: event.event, block: event.blockNumber })
 
         if (event.event === 'MemberJoin') {
           const { host } = event.returnValues
-          console.log(`➕ MemberJoin: ${host}`)
+          log.info('member joined', { host })
           if (host === Cluster.getHost()) {
-            console.log('✅ This node has been registered!')
+            log.info('this node registered, starting loop')
             this._startLoop()
           }
         } else if (event.event === 'MemberLeave') {
           const { host } = event.returnValues
-          console.log(`➖ MemberLeave: ${host}`)
+          log.info('member left', { host })
           if (host === Cluster.getHost()) {
-            console.log('This node has been removed')
+            log.info('this node removed, cleaning up')
             this._stopLoop()
             await this.cleanup()
           }
         } else if (event.event === 'MemberImageUpdate') {
           const { host, image } = event.returnValues
-          console.log(`🔄 MemberImageUpdate: ${host} -> ${image}`)
-          if (host === Cluster.getHost()) {
-            console.log(`📦 New image assigned to this node: ${image}`)
-          }
+          log.info('image updated', { host, image })
         } else if (event.event === 'StatusReport') {
           const { host, image, state } = event.returnValues
           if (host !== Cluster.getHost()) {
-            console.log(`📋 StatusReport from ${host}: ${image} (${state})`)
+            log.info('peer status report', { host, image, state })
           }
         }
       }
@@ -203,7 +196,7 @@ class CanteenScheduler {
       this.lastProcessedBlock = currentBlock
 
     } catch (error) {
-      console.error('❌ Error polling events:', error.message)
+      log.error('event polling failed', { error: error.message })
     }
   }
 
@@ -234,7 +227,7 @@ class CanteenScheduler {
       const details = await contract.methods.getMemberDetails(host).call({ from: account.address })
       const isActive = details && (details['1'] === true)
       if (isActive) {
-        console.log('Node already active on Canteen. Skipping registration.')
+        log.info('node already active, skipping registration', { host })
         return
       }
     } catch (e) {
@@ -251,13 +244,13 @@ class CanteenScheduler {
         gasPrice: await web3.eth.getGasPrice()
       })
 
-      console.log('Node has been registered on Canteen.')
+      log.info('node registered on Canteen', { host })
     } catch (error) {
       const msg = (error && error.message || '').toLowerCase()
       if (error?.code === -32000 || msg.includes('revert')) {
-        console.log('Registration reverted (likely already a member). Continuing...')
+        log.info('registration reverted (likely already a member)', { host })
       } else {
-        console.error(error)
+        log.error('registration failed', { error: error.message })
         throw error
       }
     }
@@ -265,11 +258,15 @@ class CanteenScheduler {
 
   _setContainerStatus(image, state) {
     this.containerStatus = { image, state, lastReported: Date.now() }
-    console.log(`📊 Container status: ${image || 'none'} (${state})`)
+    log.info('container status updated', { image: image || 'none', state })
   }
 
   getContainerStatus() {
     return this.containerStatus
+  }
+
+  getUptime() {
+    return Math.floor((Date.now() - this.startTime) / 1000)
   }
 
   async _reportStatus(image, state) {
@@ -289,13 +286,13 @@ class CanteenScheduler {
             gas: 200000,
             gasPrice: await this.web3.eth.getGasPrice()
           })
-        console.log(`📤 On-chain status reported: ${image} (${state})`)
+        log.info('on-chain status reported', { image, state })
       } catch (error) {
         const msg = (error.message || '').toLowerCase()
         if (msg.includes('is not a function') || msg.includes('method does not exist') || msg.includes('revert')) {
-          console.log(`ℹ️  On-chain reportStatus not available on this contract version (off-chain tracking active)`)
+          log.info('reportStatus not available on this contract version')
         } else {
-          console.log(`⚠️  Could not report status on-chain: ${error.message}`)
+          log.warn('on-chain reportStatus failed', { error: error.message })
         }
       }
     }
@@ -313,24 +310,24 @@ class CanteenScheduler {
         const running = inspect.State.Running
 
         if (!running && this.scheduledImage === scheduledImage) {
-          console.log(`⚠️  Container ${container.id.substring(0, 12)} is not running (state: ${inspect.State.Status})`)
+          log.warn('container not running', { containerId: container.id.substring(0, 12), state: inspect.State.Status })
           this._setContainerStatus(scheduledImage, 'crashed')
 
           if (inspect.State.Restarting) {
-            console.log('🔄 Docker restart policy is restarting the container...')
+            log.info('docker restart policy active, waiting')
           } else {
-            console.log('🔄 Container stopped unexpectedly — restarting...')
+            log.info('container stopped unexpectedly, restarting')
             try {
               await container.start()
-              console.log('✅ Container restarted successfully')
+              log.info('container restarted', { containerId: container.id.substring(0, 12) })
               this._setContainerStatus(scheduledImage, 'running')
             } catch (restartErr) {
-              console.error('❌ Failed to restart container:', restartErr.message)
+              log.error('container restart failed', { error: restartErr.message })
             }
           }
         }
       } catch (error) {
-        console.error('❌ Health check error:', error.message)
+        log.error('health check failed', { error: error.message })
       }
     }, 10000)
   }
@@ -347,34 +344,29 @@ class CanteenScheduler {
     if (this.scheduledImage.length === 0) return
 
     if (!this.docker) {
-      console.log(`📦 Would deploy '${scheduledImage}' but Docker is not available`)
+      log.info('Docker unavailable, would deploy', { image: scheduledImage })
       this._setContainerStatus(scheduledImage, 'pending')
       return
     }
 
     this.docker.pull(scheduledImage, (err, stream) => {
       if (err) {
-        console.error(`Error pulling image '${scheduledImage}':`, err.message)
-        console.error('Make sure Docker is running and the image name is correct.')
+        log.error('image pull failed', { image: scheduledImage, error: err.message })
         return
       }
 
       if (!stream) {
-        console.error(`No stream returned when pulling image '${scheduledImage}'`)
+        log.error('no stream returned from docker pull', { image: scheduledImage })
         return
       }
-
-      console.log('')
 
       this.docker.modem.followProgress(stream, finished.bind(this), progress)
 
       function progress(event) {
-        console.log(`${event.status}${event.id && ` ID: ${event.id}` || ''}`)
+        log.debug('pull progress', { status: event.status, id: event.id || '' })
       }
 
       async function finished() {
-        console.log('')
-
         try {
           const imageInfo = await this.docker.getImage(scheduledImage).inspect()
           await ipfs.pinImageManifest(scheduledImage, imageInfo)
@@ -382,7 +374,7 @@ class CanteenScheduler {
 
         const containers = await this.docker.listContainers()
 
-        console.log(`Starting up a container with the image '${scheduledImage}'.`)
+        log.info('deploying container', { image: scheduledImage })
 
         const containerStatus = _.find(containers, {Image: scheduledImage})
 
@@ -397,7 +389,7 @@ class CanteenScheduler {
               const contractPorts = await this.contract.methods.getPortsForImage(scheduledImage).call()
               if (contractPorts && contractPorts.length > 0) {
                 ports = contractPorts.map(p => ({ host: p[0], container: p[1] }))
-                console.log(`📋 Using port mapping from contract: ${JSON.stringify(ports)}`)
+                log.info('using contract port mapping', { ports: JSON.stringify(ports) })
               }
             } catch (_) {}
             if (ports.length === 0) {
@@ -409,13 +401,13 @@ class CanteenScheduler {
                   return { host: num, container: num }
                 })
                 if (ports.length > 0) {
-                  console.log(`📋 Detected ports from image metadata: ${JSON.stringify(ports)}`)
+                  log.info('detected ports from image metadata', { ports: JSON.stringify(ports) })
                 }
               } catch (_) {}
             }
             if (ports.length === 0) {
               ports = [{ host: 8080, container: 8080 }]
-              console.log(`⚠️  No port info found for '${scheduledImage}', defaulting to 8080`)
+              log.warn('no port info found, defaulting to 8080', { image: scheduledImage })
             }
 
             const exposedPorts = {}
@@ -440,22 +432,22 @@ class CanteenScheduler {
               }
             })
 
-            console.log('Successfully created a new container and binded it to the scheduler.')
+            log.info('container created', { image: scheduledImage, containerId: container.id.substring(0, 12) })
           } else {
             container = this.docker.getContainer(containerStatus['Id'])
-            console.log('Found a stopped container; started it and binded it to the scheduler.')
+            log.info('reusing stopped container', { containerId: container.id.substring(0, 12) })
           }
 
           const oldContainer = this.container
           if (oldContainer) {
-            console.log('Stopping and removing prior image binded to the scheduler.')
+            log.info('removing old container', { containerId: oldContainer.id.substring(0, 12) })
             await oldContainer.stop()
             await oldContainer.remove()
           }
 
           await container.start()
 
-          console.log(`Node and scheduler is ready. Container ID is: ${container.id}`)
+          log.info('container started', { image: scheduledImage, containerId: container.id.substring(0, 12) })
 
           this._startContainerHealthCheck(container, scheduledImage)
           await this._reportStatus(scheduledImage, 'running')
@@ -482,7 +474,7 @@ class CanteenScheduler {
           await container.stop()
           await container.remove()
 
-          console.log(`Found an existing running container; removing it...`)
+          log.info('removed existing running container', { image: scheduledImage })
 
           setTimeout(async () => await scheduleImage(), 3000)
         } else {
@@ -493,7 +485,7 @@ class CanteenScheduler {
   }
 
   async cleanup() {
-    console.log('Scheduler stopping; stopping and removing binded container.')
+    log.info('scheduler shutting down')
 
     this._stopContainerHealthCheck()
 

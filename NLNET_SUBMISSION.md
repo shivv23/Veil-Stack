@@ -42,9 +42,20 @@ Veil Stack solves these by moving governance on-chain (FEVM), networking to libp
 | **CLI Tool** | `veilstack` — status, containers, nodes, add-image, remove-image commands | Working in `veilstack.js` |
 | **IPFS Pinning** | Deployment manifests pinned to IPFS via Pinata for verifiable records | Working in `ipfs-service.js` |
 | **Docker Compose** | One-command local deployment with Docker socket proxy | `docker-compose.yml` |
-| **CI/CD** | GitHub Actions: contract tests (Ganache + Truffle), Docker Compose build | `.github/workflows/test.yml` — passing |
+| **CI/CD** | GitHub Actions: contract tests (Ganache + Truffle), Docker Compose build, npm audit | `.github/workflows/test.yml` — passing |
 | **Integration Tests** | 5 end-to-end tests against live backend (status, cluster, containers, lifecycle) | `test/integration_test.js` |
 | **Contract Tests** | 16 tests covering membership, images, ports, status reporting, event emission, node count | `test/canteen_test.js` |
+| **Structured Logging** | JSON-formatted logs with timestamps and component tags (`logger.js`) | Replaces all `console.log` across codebase |
+| **Graceful Shutdown** | SIGTERM/SIGINT handlers clean up containers, libp2p, and event polling | `index.js` |
+| **Health Check Endpoint** | `GET /health` returns uptime, version, status for monitoring | `web-server.js` |
+| **Pre-commit Hooks** | husky + lint-staged for syntax validation before commits | `.husky/pre-commit` |
+| **Dependency Audit** | `npm audit` runs in CI; `package-lock.json` committed | Supply chain security |
+| **Edge Case Documentation** | Failure modes and recovery at every layer (contract, scheduler, cluster, web, network) | `docs/EDGE_CASES.md` |
+| **Performance Benchmarks** | Scheduler latency, container lifecycle, gas costs, libp2p metrics, resource usage | `docs/BENCHMARKS.md` |
+| **OpenAPI Spec** | OpenAPI 3.0 specification for all REST API endpoints | `docs/openapi.yaml` |
+| **CONTRIBUTING.md** | Development setup, code style, PR guidelines, architecture overview | Present |
+| **SECURITY.md** | Vulnerability reporting, threat model, known limitations, dependency security | Present |
+| **CHANGELOG.md** | Version history with categorized changes (Added, Fixed, Changed) | Present |
 
 ### Smart Contract: Canteen.sol
 

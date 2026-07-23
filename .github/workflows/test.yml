@@ -20,6 +20,7 @@ jobs:
         with:
           node-version: 18
       - run: npm install
+      - run: npm audit --omit=dev || true
       - run: |
           npx ganache --port 8545 --deterministic &
           sleep 5
