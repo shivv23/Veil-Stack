@@ -8,7 +8,7 @@ The long-term vision: link every scheduled workload to a **paid Filecoin storage
 
 - **Repository**: https://github.com/shivv23/Veil-Stack
 - **License**: MIT
-- **Deployed Contract**: [`0x1731f4A5CC4c2f9a542389A42714aF7A1000f449`](https://calibration.filfox.info/en/address/0x1731f4A5CC4c2f9a542389A42714aF7A1000f449) on FEVM Calibration
+- **Deployed Contract**: [`0x686d5d622298cfca880168Badf83ac3F71C4a33A`](https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A) on FEVM Calibration
 - **Live Dashboard**: https://veil-stack-canteen.vercel.app/dashboard/
 - **CI**: GitHub Actions (contract tests + Docker compose build) — passing
 
@@ -31,7 +31,7 @@ Veil Stack solves these by moving governance on-chain (FEVM), networking to libp
 
 | Component | What Exists | Evidence |
 |---|---|---|
-| **Canteen.sol (FEVM)** | Smart contract: member management, image registry, replica balancing, port mapping, **status reporting** | Deployed on Calibration, [verified on Filfox](https://calibration.filfox.info/en/address/0x1731f4A5CC4c2f9a542389A42714aF7A1000f449) |
+| **Canteen.sol (FEVM)** | Smart contract: member management, image registry, replica balancing, port mapping, **status reporting** | Deployed on Calibration, [verified on Filfox](https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A) |
 | **On-chain feedback loop** | Scheduler reports container state (running/stopped/crashed) back to contract via `reportStatus()` | Implemented in `scheduler.js` |
 | **Web Dashboard** | React + D3 force-directed cluster visualization, MetaMask integration, contract state reader | Live on Vercel |
 | **libp2p Cluster** | TCP transport, Noise encryption, mplex, mDNS/bootstrap discovery, GossipSub heartbeat gossip | Working in `cluster.js` |
@@ -287,6 +287,6 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 ## Links
 
 - Repository: https://github.com/shivv23/Veil-Stack
-- Contract: https://calibration.filfox.info/en/address/0x1731f4A5CC4c2f9a542389A42714aF7A1000f449
+- Contract: https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A
 - Dashboard: https://veil-stack-canteen.vercel.app/dashboard/
 - License: MIT

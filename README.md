@@ -1,5 +1,5 @@
 [![Live Dashboard](https://img.shields.io/badge/Live-Dashboard-0090FF)](https://veil-stack-canteen.vercel.app/dashboard/)
-[![FEVM Calibration](https://img.shields.io/badge/FEVM-Calibration-42A5F5)](https://calibration.filfox.info/en/address/0x1731f4A5CC4c2f9a542389A42714aF7A1000f449)
+[![FEVM Calibration](https://img.shields.io/badge/FEVM-Calibration-42A5F5)](https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A)
 [![CI](https://img.shields.io/github/actions/workflow/status/shivv23/Veil-Stack/test.yml?label=CI)](https://github.com/shivv23/Veil-Stack/actions)
 
 ## Veil Stack: Decentralized Container Orchestrator
@@ -12,7 +12,7 @@ The long-term vision is to link every scheduled workload to a **paid Filecoin st
 
 ### Current State
 
-Canteen.sol is deployed on Filecoin Calibration at [`0x1731f4A5CC4c2f9a542389A42714aF7A1000f449`](https://calibration.filfox.info/en/address/0x1731f4A5CC4c2f9a542389A42714aF7A1000f449).
+Canteen.sol is deployed on Filecoin Calibration at [`0x686d5d622298cfca880168Badf83ac3F71C4a33A`](https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A).
 
 | Component | Status |
 |---|---|
@@ -203,7 +203,7 @@ The live dashboard at `https://veil-stack-canteen.vercel.app/dashboard/` provide
 **Environment** (`.env`):
 
 ```
-REACT_APP_FIL_CONTRACT_ADDRESS=0x1731f4A5CC4c2f9a542389A42714aF7A1000f449
+REACT_APP_FIL_CONTRACT_ADDRESS=0x686d5d622298cfca880168Badf83ac3F71C4a33A
 REACT_APP_FIL_RPC_URL=https://api.calibration.node.glif.io/rpc/v1
 REACT_APP_FIL_CHAIN_ID=314159
 REACT_APP_CLUSTER_URL=http://localhost:5001/cluster

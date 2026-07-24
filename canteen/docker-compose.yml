@@ -11,7 +11,7 @@ services:
     environment:
       - ACTIVE_CHAIN=filecoin
       - FIL_RPC_URL=https://api.calibration.node.glif.io/rpc/v1
-      - FIL_CONTRACT_ADDRESS=0x1731f4A5CC4c2f9a542389A42714aF7A1000f449
+      - FIL_CONTRACT_ADDRESS=0x686d5d622298cfca880168Badf83ac3F71C4a33A
       - PORT=5000
       - WEB_PORT=5001
       - NODE_ENV=${NODE_ENV:-development}
