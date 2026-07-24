@@ -1,7 +1,7 @@
 FROM node:20-alpine AS build
 WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install
+COPY package.json package-lock.json ./
+RUN npm install
 COPY public/ public/
 COPY src/ src/
 RUN NODE_OPTIONS=--openssl-legacy-provider npm run build

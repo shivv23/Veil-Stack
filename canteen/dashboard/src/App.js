@@ -4,7 +4,6 @@ import Web3 from 'web3'
 import styled from 'styled-components'
 import * as d3 from 'd3'
 import Canteen from './Canteen.json'
-import _ from 'lodash'
 
 const Page = styled.div`
 background-color: white;
@@ -104,6 +103,7 @@ class App extends Component {
 
   constructor(props) {
     super(props)
+    this.graphRef = React.createRef()
 
   const CONTRACT_ADDRESS = process.env.REACT_APP_FIL_CONTRACT_ADDRESS || '0xCONTRACT_ADDRESS'
     const PROVIDER_URL = process.env.REACT_APP_FIL_RPC_URL || 'https://api.calibration.node.glif.io/rpc/v1'
@@ -176,7 +176,7 @@ class App extends Component {
 
     this.setState({ status: statusParts.join(' | ') })
 
-    this.graph = d3.select(this.refs.graph)
+    this.graph = d3.select(this.graphRef.current)
 
     const nodes = []
 
@@ -254,7 +254,7 @@ class App extends Component {
       const imageDetails = await this.contract.methods.getImageDetails(imageName).call()
 
       // Check if image is active.
-      if (imageDetails['2'] && !_.find(deployedImages, name => name === imageName)) {
+      if (imageDetails['2'] && !deployedImages.includes(imageName)) {
         deployedImages.push(imageName)
       }
     }
@@ -481,7 +481,7 @@ class App extends Component {
           </StatusContainer>
 
           <Graph>
-            <g ref='graph'></g>
+            <g ref={this.graphRef}></g>
           </Graph>
           <div>
             <StatusContainer>

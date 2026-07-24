@@ -46,7 +46,7 @@ Instead, email: **security@veil-stack.dev** (or open a private GitHub advisory)
 ## Dependency Security
 
 - Run `npm audit` regularly to check for known vulnerabilities
-- Dependabot is enabled for automated dependency updates
+- Run `npm audit` in CI to check for known vulnerabilities
 - Lockfile (`package-lock.json`) is committed to ensure reproducible builds
 
 ## Network Security

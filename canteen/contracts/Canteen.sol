@@ -46,6 +46,11 @@ contract Canteen {
         owner = msg.sender;
     }
 
+    function transferOwnership(address newOwner) public restricted {
+        require(newOwner != address(0), "New owner cannot be zero address");
+        owner = newOwner;
+    }
+
     function addMember(string memory host) public restricted {
         bytes32 hashedHost = keccak256(abi.encodePacked(host));
         require(!memberDetails[hashedHost].active, "Member already active");
