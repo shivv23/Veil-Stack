@@ -84,9 +84,6 @@ Open `http://localhost:3001`, connect MetaMask, and confirm the contract address
 ## Useful commands
 
 ```bash
-# Check deployer balance
-node check-balance.cjs
-
 # Deploy via custom script
 node deploy-fevm.cjs
 ```

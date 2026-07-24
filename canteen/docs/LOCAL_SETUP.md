@@ -189,8 +189,8 @@ npm start -- port=5002 webPort=5003 nodes=127.0.0.1:5000
 - Change `port` and `webPort` parameters when starting the node
 
 **ESM/CommonJS errors**
-- `truffle-config.js` is a symlink to `truffle-config.cjs` (don't delete either)
-- Migration files use `.js` extension (Truffle requirement)
+- `truffle-config.cjs` contains the config; use `--config truffle-config.cjs` flag
+- `canteen/test/package.json` sets `"type": "commonjs"` so Truffle tests load correctly
 
 ### Dashboard Issues
 
