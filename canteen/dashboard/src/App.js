@@ -190,7 +190,7 @@ class App extends Component {
           data.active = details['1'] ? 'Up' : 'Down'
         }
       } catch (err) {
-        console.log(err)
+        // Member details unavailable — will show as empty
       }
 
       nodes.push({host: node, r: 80, ...data})

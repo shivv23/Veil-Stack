@@ -273,10 +273,9 @@ App.js ──► Render UI
 ```
 .env (Backend) ───────────► config.js ───────► index.js
                                                scheduler.js
-                                               web3-service.js
+                                               veilstack.js
 
-.env (Frontend) ──────────► React App ──────► useWeb3.js
-                                               useTokenGate.js
+.env (Frontend) ──────────► React App ──────► App.js (Web3 + MetaMask)
 ```
 
 ---

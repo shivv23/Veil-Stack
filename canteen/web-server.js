@@ -4,7 +4,10 @@ import express from 'express'
 import http from 'http'
 import ipfs from './ipfs-service.js'
 import createLogger from './logger.js'
+import { createRequire } from 'module'
 
+const require = createRequire(import.meta.url)
+const { version } = require('./package.json')
 const log = createLogger('web')
 
 class WebServer {
@@ -55,7 +58,7 @@ class WebServer {
       res.status(200).json({
         status: 'ok',
         uptime,
-        version: '0.2.0',
+        version,
         timestamp: new Date().toISOString()
       })
     })

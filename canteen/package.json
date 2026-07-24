@@ -41,7 +41,6 @@
     "dotenv": "^16.6.1",
     "express": "^4.19.2",
     "libp2p": "^1.2.0",
-    "lodash": "^4.17.21",
     "web3": "^4.10.0"
   },
   "devDependencies": {
