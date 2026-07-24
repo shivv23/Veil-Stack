@@ -8,7 +8,8 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-const Canteen = JSON.parse(fs.readFileSync(path.resolve('./dashboard/src/Canteen.json'), 'utf-8'))
+const __dirname = new URL('.', import.meta.url).pathname
+const Canteen = JSON.parse(fs.readFileSync(path.resolve(__dirname, './dashboard/src/Canteen.json'), 'utf-8'))
 
 const CHAIN_RPC = process.env.FIL_RPC_URL || 'https://api.calibration.node.glif.io/rpc/v1'
 const CONTRACT_ADDRESS = process.env.FIL_CONTRACT_ADDRESS
@@ -160,20 +161,6 @@ const commands = {
     }
   },
 
-  async 'remove-image'() {
-    const imageName = args[1]
-
-    if (!imageName) {
-      console.log('\n  Usage: veilstack remove-image <name>')
-      console.log('  Example: veilstack remove-image nginx:latest\n')
-      return
-    }
-
-    console.log(`\n  Removing image: ${imageName}`)
-    console.log('  Note: This requires MetaMask to sign the transaction.')
-    console.log('  Use the dashboard at http://localhost:3000 to remove images via MetaMask.\n')
-  },
-
   async help() {
     console.log(`
   VeilStack CLI - Decentralized Container Orchestrator
@@ -185,7 +172,6 @@ const commands = {
     containers          List running Docker containers managed by the scheduler
     nodes               Show cluster topology and libp2p peer info
     add-image <n> [r]   Show info about adding an image (use dashboard for tx)
-    remove-image <n>    Show info about removing an image (use dashboard for tx)
     help                Show this help message
 
   Examples:

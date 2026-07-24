@@ -38,9 +38,12 @@ class WebServer {
       })
     }
 
+    app.use(express.json())
     app.use((req, res, next) => {
       res.header("Access-Control-Allow-Origin", "*")
       res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+      res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+      if (req.method === 'OPTIONS') return res.sendStatus(204)
       next()
     })
 
@@ -106,15 +109,19 @@ class WebServer {
       if (!ipfs.enabled) {
         return res.status(503).json({ error: 'IPFS pinning not configured' })
       }
-      const pins = await ipfs.listPins({
-        limit: parseInt(req.query.limit) || 10,
-        offset: parseInt(req.query.offset) || 0,
-        query: req.query.q || undefined
-      })
-      res.json({ pins, count: pins.length })
+      try {
+        const pins = await ipfs.listPins({
+          limit: parseInt(req.query.limit) || 10,
+          offset: parseInt(req.query.offset) || 0,
+          query: req.query.q || undefined
+        })
+        res.json({ pins, count: pins.length })
+      } catch (error) {
+        res.status(500).json({ error: 'Failed to list pins' })
+      }
     })
 
-    app.post('/ipfs', express.json(), async (req, res) => {
+    app.post('/ipfs', async (req, res) => {
       if (!ipfs.enabled) {
         return res.status(503).json({ error: 'IPFS pinning not configured' })
       }
@@ -122,10 +129,14 @@ class WebServer {
       if (!name || !data) {
         return res.status(400).json({ error: 'name and data required' })
       }
-      const cid = await ipfs.pinJSON(name, data)
-      if (cid) {
-        res.json({ cid, name })
-      } else {
+      try {
+        const cid = await ipfs.pinJSON(name, data)
+        if (cid) {
+          res.json({ cid, name })
+        } else {
+          res.status(500).json({ error: 'Pin failed' })
+        }
+      } catch (error) {
         res.status(500).json({ error: 'Pin failed' })
       }
     })
@@ -134,8 +145,12 @@ class WebServer {
       if (!ipfs.enabled) {
         return res.status(503).json({ error: 'IPFS pinning not configured' })
       }
-      const ok = await ipfs.unpin(req.params.cid)
-      res.json({ success: ok })
+      try {
+        const ok = await ipfs.unpin(req.params.cid)
+        res.json({ success: ok })
+      } catch (error) {
+        res.status(500).json({ error: 'Unpin failed' })
+      }
     })
 
     try {

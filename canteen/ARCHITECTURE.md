@@ -249,18 +249,10 @@ Dashboard → Blockchain RPC → Contract State
 Backend:
 config.js ────────────┐
                       ├──► index.js ──► Start Application
-web3-service.js ──────┤
-                      │
-token-gate.js ────────┤
-                      │
 scheduler.js ─────────┘
 
 Frontend:
-useWeb3.js ───────────┐
-                      ├──► App.js ──► Render UI
-useTokenGate.js ──────┤
-                      │
-WalletConnect.js ─────┘
+App.js ──► Render UI
 ```
 
 ## Port Mapping

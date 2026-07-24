@@ -156,7 +156,6 @@ contract Canteen {
                 if (keccak256(abi.encodePacked(member.imageName)) != keccak256(abi.encodePacked(newImageName))) {
                     Image storage image = imageDetails[keccak256(abi.encodePacked(member.imageName))];
                     uint ratio = (image.deployed * MULT) / image.replicas;
-                    // if (ratio < currentRatio + (MULT / newImage.replicas)) {
                     if (ratio > currentRatio) {
                         member.imageName = newImageName;
                         newImage.deployed += 1;

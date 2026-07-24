@@ -2,14 +2,15 @@
 import { Web3 } from 'web3'
 import fs from 'fs'
 import path from 'path'
-const Canteen = JSON.parse(fs.readFileSync(path.resolve('./dashboard/src/Canteen.json'), 'utf-8'))
 import Docker from 'dockerode'
-import _ from 'lodash'
 import Cluster from './cluster.js'
 import ipfs from './ipfs-service.js'
 import createLogger from './logger.js'
 
 const log = createLogger('scheduler')
+
+const __dirname = new URL('.', import.meta.url).pathname
+const Canteen = JSON.parse(fs.readFileSync(path.resolve(__dirname, './dashboard/src/Canteen.json'), 'utf-8'))
 
 class CanteenScheduler {
   async start(provider, contractAddress, privateKey, dockerPath, readOnlyMode = false) {
@@ -205,7 +206,7 @@ class CanteenScheduler {
 
     const details = await contract.methods
       .getMemberDetails(Cluster.getHost())
-      .call({ from: this.accountAddress })
+      .call(this.accountAddress ? { from: this.accountAddress } : {})
     const scheduledImage = details['0']
 
     if (!details) return
@@ -274,18 +275,13 @@ class CanteenScheduler {
 
     if (!this.readOnlyMode && this.account) {
       try {
-        const contract = new this.web3.eth.Contract(
-          Canteen.abi,
-          this.contract.options.address,
-          { from: this.account.address }
-        )
-        await contract.methods
-          .reportStatus(Cluster.getHost(), image, state)
-          .send({
-            from: this.account.address,
-            gas: 200000,
-            gasPrice: await this.web3.eth.getGasPrice()
-          })
+        const reportTx = this.contract.methods.reportStatus(Cluster.getHost(), image, state)
+        const gas = await reportTx.estimateGas({ from: this.account.address })
+        await reportTx.send({
+          from: this.account.address,
+          gas,
+          gasPrice: await this.web3.eth.getGasPrice()
+        })
         log.info('on-chain status reported', { image, state })
       } catch (error) {
         const msg = (error.message || '').toLowerCase()
@@ -360,7 +356,7 @@ class CanteenScheduler {
         return
       }
 
-      this.docker.modem.followProgress(stream, finished.bind(this), progress)
+      this.docker.modem.followProgress(stream, finished.bind(this), progress.bind(this))
 
       function progress(event) {
         log.debug('pull progress', { status: event.status, id: event.id || '' })
@@ -376,11 +372,11 @@ class CanteenScheduler {
 
         log.info('deploying container', { image: scheduledImage })
 
-        const containerStatus = _.find(containers, {Image: scheduledImage})
+          const containerStatus = containers.find(c => c.Image === scheduledImage)
 
         const scheduleImage = async () => {
           const containers = await this.docker.listContainers()
-          const containerStatus = _.find(containers, {Image: scheduledImage})
+        const containerStatus = containers.find(c => c.Image === scheduledImage)
 
           let container
           if (!containerStatus) {
@@ -406,8 +402,9 @@ class CanteenScheduler {
               } catch (_) {}
             }
             if (ports.length === 0) {
-              ports = [{ host: 8080, container: 8080 }]
-              log.warn('no port info found, defaulting to 8080', { image: scheduledImage })
+              const defaultPort = parseInt(process.env.DEFAULT_PORT) || 8080
+              ports = [{ host: defaultPort, container: defaultPort }]
+              log.warn('no port info found, using default', { image: scheduledImage, port: defaultPort })
             }
 
             const exposedPorts = {}

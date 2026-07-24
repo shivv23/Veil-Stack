@@ -45,13 +45,14 @@ async function main() {
   const gasEstimate = await deployTx.estimateGas({ from: deployer })
   console.log(`⛽ Estimated gas: ${gasEstimate}`)
 
+  const gasPrice = await web3.eth.getGasPrice()
   console.log(`⛽ Using gas: ${Math.min(Math.floor(Number(gasEstimate) * 1.3), 8000000)}`)
-  console.log(`⛽ Gas price: 100000000 (100 gwei)`)
+  console.log(`⛽ Gas price: ${gasPrice}`)
   
   const receipt = await deployTx.send({
     from: deployer,
     gas: Math.floor(Number(gasEstimate) * 1.3),
-    gasPrice: '100000000'
+    gasPrice
   })
 
   console.log('')

@@ -8,7 +8,6 @@ import { bootstrap } from '@libp2p/bootstrap'
 import { gossipsub } from '@chainsafe/libp2p-gossipsub'
 import { identify } from '@libp2p/identify'
 import { EventEmitter } from 'events'
-import _ from 'lodash'
 import createLogger from './logger.js'
 
 const log = createLogger('cluster')

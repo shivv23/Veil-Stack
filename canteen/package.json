@@ -1,6 +1,6 @@
 {
   "name": "canteen",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "bin": {
@@ -11,7 +11,7 @@
     "deploy": "node deploy.js",
     "test": "truffle test --config truffle-config.cjs",
     "test:contracts": "truffle test --config truffle-config.cjs test/canteen_test.js",
-    "test:integration": "node test/integration_test.js",
+    "test:integration": "npx mocha --timeout 10000 test/integration_test.js",
     "compile": "truffle compile",
     "console": "truffle console",
     "migrate:sepolia": "truffle migrate --network sepolia",

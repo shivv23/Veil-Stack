@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-import _ from 'lodash'
 import cluster from './cluster.js'
 import scheduler from './scheduler.js'
 import Web3 from 'web3'
@@ -10,10 +9,10 @@ import createLogger from './logger.js'
 
 const log = createLogger('main')
 
-const args = _.reduce(process.argv.slice(2), (args, arg) => {
+const args = process.argv.slice(2).reduce((acc, arg) => {
   const [k, v = true] = arg.split('=')
-  args[k] = v
-  return args
+  acc[k] = v
+  return acc
 }, {})
 
 const port = args.port || SERVER_CONFIG.port
