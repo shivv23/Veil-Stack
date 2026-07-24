@@ -19,6 +19,7 @@ const args = _.reduce(process.argv.slice(2), (args, arg) => {
 const port = args.port || SERVER_CONFIG.port
 const webPort = args.webPort || SERVER_CONFIG.webPort
 const nodes = args.nodes && args.nodes.split(',') || []
+const privateKey = process.env.PRIVATE_KEY || null
 
 const { warnings } = validateConfig()
 warnings.forEach(w => log.warn(w))
@@ -41,9 +42,9 @@ cluster.start(port, nodes).then(() => {
   scheduler.start(
     new Web3.providers.HttpProvider(activeChain.rpcUrl),
     activeChain.contractAddress,
-    null,
+    privateKey,
     undefined,
-    true
+    !privateKey
   )
 
   web.start(Number(webPort), scheduler)

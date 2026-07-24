@@ -198,6 +198,8 @@ The live dashboard at `https://veil-stack-canteen.vercel.app/dashboard/` provide
 - **MetaMask integration** — Connect with Filecoin Calibration to register nodes, add/remove images
 - **Live container status** — On-chain `StatusReport` data shows node health
 
+> **Note on D3 version**: The dashboard uses D3 v4 (pinned) because the force-directed graph relies on `d3.event` for drag interactions, which was removed in D3 v6. Upgrading D3 requires rewriting the drag handlers.
+
 **Environment** (`.env`):
 
 ```
@@ -288,6 +290,8 @@ npm start
 ```
 
 **Build the dashboard:**
+
+> **Node.js requirement**: The dashboard uses react-scripts 3.x which requires Node 16 or the `--openssl-legacy-provider` flag on Node 17+. Node 16 LTS is recommended for builds.
 
 ```bash
 cd canteen/dashboard

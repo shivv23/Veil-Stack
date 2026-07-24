@@ -5,6 +5,7 @@ contract Canteen {
     struct Member {
         string imageName;
         bool active;
+        address reportAddr;
     }
 
     struct Status {
@@ -50,7 +51,7 @@ contract Canteen {
         require(!memberDetails[hashedHost].active, "Member already active");
 
         members.push(host);
-        memberDetails[hashedHost] = Member("", true);
+        memberDetails[hashedHost] = Member("", true, msg.sender);
 
         emit MemberJoin(host);
         setImageForMember(host);
@@ -65,7 +66,7 @@ contract Canteen {
         if (bytes(affectedImage).length > 0) {
             imageDetails[keccak256(abi.encodePacked(affectedImage))].deployed -= 1;
         }
-        memberDetails[hashedHost] = Member("", false);
+        memberDetails[hashedHost] = Member("", false, address(0));
         delete memberStatus[hashedHost];
 
         emit MemberLeave(host);
@@ -180,7 +181,7 @@ contract Canteen {
         require(keccak256(abi.encodePacked(memberDetails[hashedHost].imageName)) == keccak256(abi.encodePacked("")), "Member already has an image");
         require(imageDetails[hashedImage].deployed < imageDetails[hashedImage].replicas, "Image has reached replica limit");
 
-        memberDetails[hashedHost] = Member(image, true);
+        memberDetails[hashedHost] = Member(image, true, memberDetails[hashedHost].reportAddr);
         imageDetails[hashedImage].deployed += 1;
         emit MemberImageUpdate(host, image);
     }
@@ -223,6 +224,7 @@ contract Canteen {
     function reportStatus(string memory host, string memory image, string memory state) public {
         bytes32 hashedHost = keccak256(abi.encodePacked(host));
         require(memberDetails[hashedHost].active, "Member not active");
+        require(memberDetails[hashedHost].reportAddr == msg.sender, "Caller not authorized for this member");
 
         memberStatus[hashedHost] = Status(image, state, block.timestamp);
         emit StatusReport(host, image, state, block.timestamp);
