@@ -53,7 +53,7 @@ node test/integration_test.js
 - Functional patterns preferred over class-based where possible
 - Use `const`/`let`, never `var`
 - Async/await over raw promises
-- No semicolons (project convention)
+- Semicolons required (enforced by `node --check` via lint-staged)
 
 ### Solidity
 
