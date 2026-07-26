@@ -1,4 +1,4 @@
-# Veil Stack — NLnet Grant Application
+# Veil Stack — Grant Application
 
 ## Project Summary
 
@@ -157,7 +157,7 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| **FEVM contract bugs** | Medium | High | Extensive test suite (16 contract tests); CI enforced; plan external audit in M4 |
+| **FEVM contract bugs** | Medium | High | Extensive test suite (8 contract tests + 5 integration tests); CI enforced; plan external audit in M4 |
 | **Filecoin mainnet instability** | Low | High | Calibration testnet for all development; mainnet migration only after stability confirmed |
 | **libp2p NAT traversal failures** | Medium | Medium | mDNS for local networks; bootstrap peers for public; relay circuit as fallback |
 | **Docker socket access security** | Low | High | Docker socket proxy (tecnativa); resource limits enforced; read-only mode available |
@@ -250,13 +250,35 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 
 ## Budget Summary
 
-| Milestone | Focus | Amount | Timeline |
-|---|---|---|---|
-| M1 | Filecoin Deal Pipeline | €15,000 | Months 1-5 |
-| M2 | CID Verification + Multi-Provider | €12,000 | Months 1-4 |
-| M3 | FHE Confidential Scheduling | €10,000 | Months 1-6 |
-| M4 | Production Hardening | €8,000 | Months 1-5 |
-| **Total** | | **€45,000** | **6 months** |
+| Milestone | Focus | Amount | Estimated Hours | Timeline |
+|---|---|---|---|---|
+| M1 | Filecoin Deal Pipeline | €15,000 | ~250 hrs | Months 1-5 |
+| M2 | CID Verification + Multi-Provider | €12,000 | ~200 hrs | Months 1-4 |
+| M3 | FHE Confidential Scheduling | €10,000 | ~170 hrs | Months 1-6 |
+| M4 | Production Hardening | €8,000 | ~130 hrs | Months 1-5 |
+| **Total** | | **€45,000** | **~750 hrs** | **6 months** |
+
+### Budget Breakdown by Task
+
+| Task | Hours | Rate | Cost | Milestone |
+|---|---|---|---|---|
+| Solidity contract V2 (StorageDeal struct, events, access control) | 60 | €25/hr | €1,500 | M1 |
+| Lotus JSON-RPC integration (filecoin-service.js) | 50 | €25/hr | €1,250 | M1 |
+| Deal lifecycle in scheduler (propose → monitor → settle) | 40 | €25/hr | €1,000 | M1 |
+| Dashboard deal visualization tab | 30 | €25/hr | €750 | M1 |
+| Integration tests (deal proposal, status transitions) | 40 | €25/hr | €1,000 | M1 |
+| CID verification in scheduler | 45 | €25/hr | €1,125 | M2 |
+| Multi-provider fallback + retry logic | 50 | €25/hr | €1,250 | M2 |
+| End-to-end test suite (3-node, failure simulation) | 40 | €25/hr | €1,000 | M2 |
+| Documentation (provider setup, deal lifecycle) | 25 | €25/hr | €625 | M2 |
+| Zama FHE SDK integration | 60 | €25/hr | €1,500 | M3 |
+| Ciphertext scheduling (encrypted cost functions) | 50 | €25/hr | €1,250 | M3 |
+| FHE toggle + performance benchmarks | 35 | €25/hr | €875 | M3 |
+| Demo cluster (5-node FHE scheduling) | 25 | €25/hr | €625 | M3 |
+| Security audit coordination + remediation | 40 | €25/hr | €1,000 | M4 |
+| 10-node CI pipeline | 35 | €25/hr | €875 | M4 |
+| Federation model + role-based access | 30 | €25/hr | €750 | M4 |
+| Mainnet migration plan + documentation | 25 | €25/hr | €625 | M4 |
 
 ---
 
@@ -336,8 +358,13 @@ Cloud infrastructure concentration is a core concern for European digital sovere
 
 ## Team
 
-- **Sumanjeet** — Smart contract development, FEVM integration
-- **Shivam Kumar (shivv23)** — Full-stack development, libp2p networking, CI/CD
+### Shivam Kumar ([@shivv23](https://github.com/shivv23))
+
+Full-stack developer with experience across distributed systems, cloud-native infrastructure, and open source contributions. Active contributor to [Meshery](https://github.com/meshery/meshery) (CNCF cloud native manager), [libp2p](https://github.com/libp2p) peer-to-peer networking, and [Sugar Labs](https://github.com/sugarlabs/musicblocks) education software. Technical stack spans Go, Rust, TypeScript, and Python with production experience in Docker, Kubernetes, and cloud infrastructure (AWS, GCP). Built and shipped Veil Stack V1 — smart contract, scheduler, libp2p cluster, web dashboard, CI/CD pipeline.
+
+### Sumanjeet ([@sumanjeet0012](https://github.com/sumanjeet0012))
+
+Open source contributor with 100+ public repositories and active involvement in the [libp2p](https://github.com/libp2p/py-libp2p) ecosystem. Core contributor to py-libp2p universal connectivity project — authored the pub-sub example ([PR #515](https://github.com/libp2p/py-libp2p/pull/515)) and leads the Kademlia DHT implementation ([#540](https://github.com/libp2p/py-libp2p/issues/540)). Experience with decentralized systems, agent-based architectures, and peer-to-peer protocols. Developed Canteen.sol smart contract and FEVM integration for Veil Stack.
 
 ---
 
