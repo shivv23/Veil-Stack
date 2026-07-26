@@ -216,7 +216,7 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 
 ---
 
-### Milestone 3: Confidential Scheduling — FHE Layer (€10,000)
+### Milestone 3: Confidential Scheduling — FHE Layer (€13,000)
 
 **Goal**: Encrypted scheduling inputs for zero-trust and regulated environments.
 
@@ -232,7 +232,7 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 
 ---
 
-### Milestone 4: Production Hardening (€8,000)
+### Milestone 4: Production Hardening (€5,000)
 
 **Goal**: Audit, multi-node CI, mainnet readiness.
 
@@ -254,13 +254,13 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 |---|---|---|---|---|
 | M1 | Filecoin Deal Pipeline | €15,000 | ~600 hrs | Months 1-5 |
 | M2 | CID Verification + Multi-Provider | €12,000 | ~480 hrs | Months 1-4 |
-| M3 | FHE Confidential Scheduling | €10,000 | ~400 hrs | Months 1-6 |
-| M4 | Production Hardening | €8,000 | ~320 hrs | Months 1-5 |
+| M3 | FHE Confidential Scheduling | €13,000 | ~520 hrs | Months 1-6 |
+| M4 | Production Hardening | €5,000 | ~200 hrs | Months 1-5 |
 | **Total** | | **€45,000** | **~1,800 hrs** | **6 months** |
 
 ### Budget Breakdown by Task
 
-**Rate**: €25/hr (blended junior/senior across team of 3)
+**Rate**: €25/hr (team of 2: Shivam + Sumanjeet)
 
 | Task | Hours | Rate | Cost | Milestone |
 |---|---|---|---|---|
@@ -285,23 +285,21 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 | IPFS content routing: redundant pinning across multiple gateways | 30 | €25/hr | €750 | M2 |
 | Documentation: provider setup, deal lifecycle, troubleshooting | 40 | €25/hr | €1,000 | M2 |
 | **M2 Subtotal** | **480** | | **€12,000** | |
-| Zama FHE SDK integration: encrypted telemetry from nodes | 100 | €25/hr | €2,500 | M3 |
-| Ciphertext scheduling: cost functions on encrypted inputs | 80 | €25/hr | €2,000 | M3 |
-| FHE toggle mechanism: `VEIL_FHE_MODE=enabled\|disabled` | 40 | €25/hr | €1,000 | M3 |
-| Performance benchmarks: latency/throughput plaintext vs FHE | 60 | €25/hr | €1,500 | M3 |
-| Demo cluster: 5-node encrypted scheduling on Calibration | 40 | €25/hr | €1,000 | M3 |
-| FHE key management: key generation, rotation, secure storage | 30 | €25/hr | €750 | M3 |
-| Benchmark visualization in dashboard | 20 | €25/hr | €500 | M3 |
+| Zama FHE SDK integration: encrypted telemetry from nodes | 130 | €25/hr | €3,250 | M3 |
+| Ciphertext scheduling: cost functions on encrypted inputs | 100 | €25/hr | €2,500 | M3 |
+| FHE toggle mechanism: `VEIL_FHE_MODE=enabled\|disabled` | 50 | €25/hr | €1,250 | M3 |
+| Performance benchmarks: latency/throughput plaintext vs FHE | 80 | €25/hr | €2,000 | M3 |
+| Demo cluster: 5-node encrypted scheduling on Calibration | 50 | €25/hr | €1,250 | M3 |
+| FHE key management: key generation, rotation, secure storage | 40 | €25/hr | €1,000 | M3 |
+| FHE security audit + side-channel resistance review | 40 | €25/hr | €1,000 | M3 |
 | FHE integration documentation + operator guide | 30 | €25/hr | €750 | M3 |
-| **M3 Subtotal** | **400** | | **€10,000** | |
-| Security audit coordination + remediation | 80 | €25/hr | €2,000 | M4 |
-| 10-node CI pipeline: automated multi-node cluster in GitHub Actions | 70 | €25/hr | €1,750 | M4 |
-| Federation model: cross-org cluster coordination, role-based access | 50 | €25/hr | €1,250 | M4 |
-| Mainnet migration: deployment script + checklist + dry-run on Calibration | 40 | €25/hr | €1,000 | M4 |
-| Documentation overhaul: architecture, API reference, contribution guide | 40 | €25/hr | €1,000 | M4 |
-| Load testing: 10-node cluster under sustained workload | 20 | €25/hr | €500 | M4 |
-| Monitoring: Prometheus metrics, alerting, log aggregation | 20 | €25/hr | €500 | M4 |
-| **M4 Subtotal** | **320** | | **€8,000** | |
+| **M3 Subtotal** | **520** | | **€13,000** | |
+| Security audit coordination + remediation | 60 | €25/hr | €1,500 | M4 |
+| 10-node CI pipeline: automated multi-node cluster in GitHub Actions | 50 | €25/hr | €1,250 | M4 |
+| Federation model: cross-org cluster coordination, role-based access | 40 | €25/hr | €1,000 | M4 |
+| Mainnet migration: deployment script + checklist + dry-run on Calibration | 30 | €25/hr | €750 | M4 |
+| Documentation overhaul: architecture, API reference, contribution guide | 20 | €25/hr | €500 | M4 |
+| **M4 Subtotal** | **200** | | **€5,000** | |
 
 ---
 
