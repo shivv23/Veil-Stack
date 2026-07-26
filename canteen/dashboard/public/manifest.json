@@ -1,6 +1,6 @@
 {
-  "short_name": "Canteen",
-  "name": "Canteen Dashboard",
+  "short_name": "Veil Stack",
+  "name": "Veil Stack Dashboard",
   "icons": [
     {
       "src": "favicon.ico",
@@ -10,6 +10,6 @@
   ],
   "start_url": "./index.html",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#0a0e1a",
+  "background_color": "#0a0e1a"
 }

@@ -3,33 +3,138 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Veil Stack (Canteen) — Container Orchestration on FEVM</title>
+  <title>Veil Stack — Decentralized Container Orchestration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem; line-height: 1.6; color: #1a1a2e; background: #f8f9fa; }
-    h1 { font-size: 2rem; margin-bottom: 0.25rem; }
-    .tagline { font-size: 1.1rem; color: #555; margin-bottom: 2rem; }
-    h2 { font-size: 1.25rem; margin-top: 2rem; border-bottom: 2px solid #e9ecef; padding-bottom: 0.25rem; }
-    a { color: #2563eb; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .contract { background: #1a1a2e; color: #e0e0e0; padding: 0.75rem 1rem; border-radius: 6px; font-family: monospace; word-break: break-all; }
-    .footer { margin-top: 3rem; font-size: 0.85rem; color: #888; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0e1a;
+      color: #e0e4ef;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .card {
+      max-width: 640px;
+      width: 100%;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #818cf8;
+      background: rgba(129, 140, 248, 0.12);
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      vertical-align: middle;
+      margin-left: 0.75rem;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+    .tagline {
+      font-size: 0.95rem;
+      color: #6b7280;
+      margin-bottom: 2.5rem;
+      line-height: 1.5;
+    }
+    .section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+    }
+    .section p {
+      font-size: 0.88rem;
+      color: #c0c4d0;
+      line-height: 1.6;
+    }
+    .address {
+      font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      font-size: 0.82rem;
+      color: #818cf8;
+      background: rgba(129,140,248,0.08);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      word-break: break-all;
+      display: inline-block;
+      margin-top: 0.5rem;
+    }
+    a {
+      color: #818cf8;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    a:hover {
+      color: #a5b4fc;
+      text-decoration: underline;
+    }
+    .links {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .links a {
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      color: #4b5563;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <h1>Veil Stack (Canteen)</h1>
-  <p class="tagline">Docker container scheduler on FEVM + libp2p</p>
+  <div class="card">
+    <h1>Veil Stack <span class="badge">v0.2.0</span></h1>
+    <p class="tagline">Decentralized container orchestration on Filecoin.<br>Schedule Docker workloads through smart contracts and a libp2p peer mesh.</p>
 
-  <p>Veil Stack schedules Docker containers through a smart contract on FEVM and a libp2p peer-to-peer mesh. V1 provides on-chain governance and cluster networking; V2 will add automated Filecoin deal origination for every workload.</p>
+    <div class="section">
+      <div class="section-label">Smart Contract</div>
+      <p>Deployed and verified on Filecoin Calibration.</p>
+      <div class="address">0x686d5d622298cfca880168Badf83ac3F71C4a33A</div>
+      <div class="links">
+        <a href="https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A" target="_blank">Filfox ↗</a>
+        <a href="https://github.com/shivv23/Veil-Stack/blob/main/canteen/contracts/Canteen.sol" target="_blank">Source ↗</a>
+      </div>
+    </div>
 
-  <h2>Contract</h2>
-  <p>Deployed and verified on FEVM Calibration:</p>
-  <p class="contract">0x686d5d622298cfca880168Badf83ac3F71C4a33A</p>
-  <p><a href="https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A">View on Filfox →</a></p>
+    <div class="section">
+      <div class="section-label">How It Works</div>
+      <p>V1 connects container scheduling to on-chain governance. Nodes join a libp2p mesh, the contract tracks image deployments and replica counts, and a scheduler loop provisions containers across the cluster. V2 will add automated deal origination to persist workload state on Filecoin.</p>
+    </div>
 
-  <h2>Source Code</h2>
-  <p><a href="https://github.com/shivv23/Veil-Stack/blob/main/canteen/contracts/Canteen.sol">Canteen.sol on GitHub →</a></p>
-  <p><a href="https://github.com/shivv23/Veil-Stack">Full Repository →</a></p>
+    <div class="section">
+      <div class="section-label">Source Code</div>
+      <div class="links">
+        <a href="https://github.com/shivv23/Veil-Stack" target="_blank">GitHub Repository ↗</a>
+      </div>
+    </div>
 
-  <div class="footer">Veil Stack — MIT License</div>
+    <div class="footer">Veil Stack — MIT License</div>
+  </div>
 </body>
 </html>
