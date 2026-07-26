@@ -22,10 +22,11 @@ contract Canteen {
 
     address public owner;
 
-    event MemberJoin(string host);
-    event MemberLeave(string host);
-    event MemberImageUpdate(string host, string image);
-    event StatusReport(string host, string image, string state, uint timestamp);
+    event MemberJoin(string indexed host);
+    event MemberLeave(string indexed host);
+    event MemberImageUpdate(string indexed host, string image);
+    event StatusReport(string indexed host, string image, string state, uint timestamp);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     mapping(bytes32 => Member) memberDetails;
     string[] public members;
@@ -35,7 +36,7 @@ contract Canteen {
     string[] public images;
     mapping (bytes32 => uint[2][]) exposedPortsForImages;
 
-    uint MULT = 100000;
+    uint public constant MULT = 100000;
 
     modifier restricted() {
         require(msg.sender == owner, "Caller is not the owner");
@@ -48,6 +49,7 @@ contract Canteen {
 
     function transferOwnership(address newOwner) public restricted {
         require(newOwner != address(0), "New owner cannot be zero address");
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 

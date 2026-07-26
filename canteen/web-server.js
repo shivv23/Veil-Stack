@@ -44,11 +44,27 @@ class WebServer {
     app.use(express.json())
     app.use((req, res, next) => {
       res.header("Access-Control-Allow-Origin", "*")
-      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+      res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-API-Key")
       res.header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
       if (req.method === 'OPTIONS') return res.sendStatus(204)
       next()
     })
+
+    // API key auth for mutating endpoints (POST/DELETE)
+    const apiKey = process.env.WEB_API_KEY
+    if (apiKey) {
+      app.use((req, res, next) => {
+        if (req.method === 'POST' || req.method === 'DELETE') {
+          const provided = req.headers['x-api-key']
+          if (!provided || provided !== apiKey) {
+            return res.status(401).json({ error: 'Missing or invalid X-API-Key header' })
+          }
+        }
+        next()
+      })
+    } else {
+      log.warn('WEB_API_KEY not set — POST/DELETE endpoints are unauthenticated')
+    }
 
     app.get('/', clusterDetails)
     app.get('/cluster', clusterDetails)

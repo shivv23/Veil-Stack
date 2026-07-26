@@ -2,11 +2,11 @@
 
 ## Project Summary
 
-**Veil Stack** is a decentralized container orchestration platform that shifts infrastructure control from cloud vendor lock-in to open, community-governed systems.
+**Veil Stack** is a decentralized container orchestration platform that shifts infrastructure control from cloud vendor lock-in to open, user-operated systems.
 
 The core problem: container orchestration — the layer that decides where code runs — is controlled by a small number of centralized vendors using proprietary schedulers and closed APIs. Veil Stack replaces this with an open smart contract on Filecoin EVM, peer-to-peer coordination via libp2p, and verifiable storage via IPFS/Filecoin.
 
-**What exists today (V1)**: A working orchestrator with on-chain member management, event-driven scheduling, container lifecycle control, a web dashboard, and 20 tests (8 contract + 5 integration + 7 dashboard) — deployed and verified on Filecoin Calibration.
+**What exists today (V1)**: A working orchestrator with on-chain membership management, event-driven container scheduling, a web dashboard, and 20 tests (8 contract + 5 integration + 7 dashboard) — deployed and verified on Filecoin Calibration.
 
 **What this funding builds (V2)**: A Filecoin storage deal pipeline (every deployment = a verifiable storage deal), CID-verified image retrieval, and a confidential scheduling layer using FHE for regulated workloads.
 
@@ -40,9 +40,9 @@ Organizations sharing a cluster must expose resource metrics (CPU, memory, disk)
 
 The internet's infrastructure layer is becoming as concentrated as the applications it hosts. Container orchestration — the system that decides where code runs — is controlled by a small number of vendors using closed-source schedulers, proprietary APIs, and centralized consensus. This is the opposite of the open, user-operated internet.
 
-A decentralized orchestration layer, governed by an open smart contract on a public chain, with peer-to-peer coordination and verifiable storage, is a direct contribution to the open internet stack. It shifts infrastructure control from vendor platforms to the communities that run them.
+A decentralized orchestration layer, with an open smart contract on a public chain for membership and configuration, peer-to-peer coordination, and verifiable storage, is a direct contribution to the open internet stack. It shifts infrastructure control from vendor platforms to the operators that run them.
 
-Veil Stack addresses all four gaps with a working implementation: on-chain governance (FEVM), decentralized networking (libp2p), verifiable storage (IPFS/Filecoin), and planned confidential computing (FHE).
+Veil Stack addresses all four gaps with a working V1: on-chain membership management (FEVM), decentralized networking (libp2p), event-driven scheduling, and a web dashboard. V2 will add verifiable storage (IPFS/Filecoin) and confidential computing (FHE).
 
 ---
 
@@ -50,7 +50,7 @@ Veil Stack addresses all four gaps with a working implementation: on-chain gover
 
 | Component | What Exists | Evidence |
 |---|---|---|
-| **Canteen.sol (FEVM)** | Smart contract: member management, image registry, replica balancing, port mapping, **status reporting** | Deployed on Calibration, [verified on Filfox](https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A) |
+| **Canteen.sol (FEVM)** | Smart contract: on-chain membership registry, image configuration, replica ratio calculation, port mapping, **status reporting** | Deployed on Calibration, [verified on Filfox](https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A) |
 | **On-chain feedback loop** | Scheduler reports container state (running/stopped/crashed) back to contract via `reportStatus()` | Implemented in `scheduler.js` |
 | **Web Dashboard** | React + D3 force-directed cluster visualization, MetaMask integration, contract state reader | Live on Vercel |
 | **libp2p Cluster** | TCP transport, Noise encryption, mplex, mDNS/bootstrap discovery, GossipSub heartbeat gossip | Working in `cluster.js` |
@@ -60,7 +60,7 @@ Veil Stack addresses all four gaps with a working implementation: on-chain gover
 | **REST API** | `/status`, `/containers`, `/cluster`, `/ipfs` endpoints for backend introspection | Working in `web-server.js` |
 | **CLI Tool** | `veilstack` — status, containers, nodes, add-image commands | Working in `veilstack.js` |
 | **IPFS Pinning** | Deployment manifests pinned to IPFS via Pinata for verifiable records | Working in `ipfs-service.js` |
-| **Docker Compose** | One-command local deployment with Docker socket proxy | `docker-compose.yml` |
+| **Docker Compose** | One-command local deployment with Docker socket mounting | `docker-compose.yml` |
 | **CI/CD** | GitHub Actions: contract tests (Ganache + Truffle), Docker Compose build, npm audit | `.github/workflows/test.yml` — passing |
 | **Integration Tests** | 5 end-to-end tests against live backend (status, cluster, containers, lifecycle) | `test/integration_test.js` |
 | **Contract Tests** | 8 tests covering membership, images, ports, status reporting, event emission, node count | `test/canteen_test.js` |
@@ -142,14 +142,14 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 
 | Project | Approach | Veil Stack Difference |
 |---|---|---|
-| **Kubernetes** | Centralized control plane (etcd + scheduler + API server) | No central control plane; governance on FEVM smart contract; libp2p for peer coordination |
+| **Kubernetes** | Centralized control plane (etcd + scheduler + API server) | No central control plane; on-chain membership and configuration via FEVM; libp2p for peer coordination |
 | **Docker Swarm** | Built into Docker; manager nodes with Raft consensus | On-chain membership via FEVM; container state reported to smart contract for auditability |
 | **Nomad (HashiCorp)** | Centralized scheduler with plugin architecture | Decentralized scheduling with on-chain events; Filecoin storage deal integration (planned) |
 | **K3s** | Lightweight Kubernetes for edge | Still requires centralized server; Veil Stack nodes are fully autonomous peers |
 | **Akash Network** | Decentralized compute marketplace on Cosmos | Akash uses own chain; Veil Stack leverages FEVM + Filecoin storage for verifiable deployment records |
 | **Flux (RunOnFlux)** | Decentralized compute on Zcash | Flux uses proprietary infrastructure; Veil Stack uses open standards (libp2p, FEVM, IPFS) |
 
-**Key differentiator**: Veil Stack is the only orchestrator that combines on-chain governance (FEVM), decentralized networking (libp2p), verifiable storage (IPFS/Filecoin), and planned confidential computing (FHE) in a single platform.
+**Key differentiator**: V1 delivers on-chain membership management (FEVM) and decentralized networking (libp2p). V2 will add verifiable storage (Filecoin deal origination) and confidential computing (FHE) — combining four capabilities no other orchestrator offers in a single platform.
 
 ---
 
@@ -160,9 +160,9 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 | **FEVM contract bugs** | Medium | High | Extensive test suite (8 contract tests + 5 integration tests); CI enforced; plan external audit in M4 |
 | **Filecoin mainnet instability** | Low | High | Calibration testnet for all development; mainnet migration only after stability confirmed |
 | **libp2p NAT traversal failures** | Medium | Medium | mDNS for local networks; bootstrap peers for public; relay circuit as fallback |
-| **Docker socket access security** | Low | High | Docker socket proxy (tecnativa); resource limits enforced; read-only mode available |
+| **Docker socket access security** | Low | High | Docker socket mounted locally only; resource limits enforced; read-only mode available; V2 will add socket proxy |
 | **FHE performance overhead** | High | Medium | FHE is optional toggle; plaintext scheduling default; performance benchmarks planned |
-| **Team bandwidth** | Medium | Medium | Milestones are sequential; P0 items already delivered; FHE can slip without blocking V2 |
+| **Team bandwidth** | Medium | Medium | Work is divided: Shivam leads M1+M3 (Solidity, Lotus, FHE); Sumanjeet leads M2+M4 (CID verification, testing, CI); M3 runs in parallel with M1/M2 |
 | **Filecoin storage provider availability** | Medium | Medium | Multi-provider fallback planned in M2; provider rotation with exponential backoff |
 
 ---
@@ -182,6 +182,20 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 
 ---
 
+## Contract Upgrade Strategy
+
+Smart contracts on FEVM are immutable once deployed. Veil Stack V2 requires a new contract version (`CanteenV2.sol`) with the `StorageDeal` struct and related functions. The migration strategy:
+
+1. **Deploy `CanteenV2.sol`** to Calibration with all V1 functions preserved plus V2 additions
+2. **Re-register members** via the new contract — the V1 membership list is small (testnet phase) and re-registration is a one-time cost
+3. **Dual-read period**: Dashboard reads from both V1 (historical data) and V2 (active deals) during transition
+4. **V1 sunset**: Once V2 is verified on Calibration, V1 contract is deprecated and V2 becomes the sole contract
+5. **Mainnet deployment**: Only V2 is deployed to mainnet — no migration needed
+
+This is feasible because Veil Stack is in testnet/development phase. A production-grade upgrade proxy pattern (e.g., OpenZeppelin Transparent Proxy) is planned for mainnet if needed.
+
+---
+
 ## Funding-Led Milestones
 
 ### Milestone 1: Filecoin Deal Pipeline (€15,000)
@@ -193,10 +207,13 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 | Canteen.sol V2 | Add `StorageDeal` struct (dealId, providerId, payloadCid, size, term, status) + `DealAnchored` event | Month 1-2 |
 | `filecoin-service.js` | Backend module: Lotus JSON-RPC client for `Filecoin.MarketPublishDeal`, deal status polling | Month 2-3 |
 | Deal lifecycle in scheduler | `addImage()` proposes a deal; scheduler monitors proposed → active → expired/slashed | Month 3-4 |
-| Integration tests | Automated tests: deal proposal, status transitions, CID verification | Month 4 |
-| Dashboard: deal tab | Visualize deal status, provider info, CID, term length | Month 4-5 |
+| Dashboard: deal tab + analytics | Visualize deal status, provider info, CID, term length; historical deal analytics | Month 4-5 |
+| IPFS manifest pinning | Deployment manifests pinned to IPFS with CID anchored on-chain for verifiable records | Month 4-5 |
+| Error handling + retry logic | Exponential backoff, provider fallback, deal retry on failure | Month 4-5 |
+| Integration tests | Automated tests: deal proposal, status transitions, CID verification | Month 5 |
+| Deal lifecycle documentation | Provider setup guide, deal lifecycle docs | Month 5 |
 
-**Exit criteria**: Deploy a container on a Veil node → deal is proposed to a Calibration provider → deal goes active → dashboard shows deal status.
+**Exit criteria**: Deploy `nginx:latest` on node A → `filecoin-service.js` calls `Filecoin.MarketPublishDeal` → deal appears with status `active` on Calibration within 30 minutes → `GET /deals` returns deal with `status: 'active'`, valid `providerId`, and correct `payloadCid` → dashboard deal tab displays deal info.
 
 ---
 
@@ -209,16 +226,21 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 | CID verification in scheduler | Before `docker pull`, verify image CID matches on-chain deal commitment | Month 1-2 |
 | Multi-provider fallback | If primary provider is offline, re-propose to next available provider | Month 2-3 |
 | Deal retry logic | Exponential backoff + provider rotation on deal failure | Month 3 |
+| Provider health monitoring | Uptime tracking, latency measurement, on-chain reputation scoring | Month 3-4 |
+| IPFS content routing | Redundant pinning across multiple gateways for resilience | Month 3-4 |
 | End-to-end test suite | 3-node cluster, provider failure simulation, CID integrity checks | Month 3-4 |
+| Dashboard: provider health view | Failover status, CID audit log, provider performance history | Month 4 |
 | Documentation | Provider setup guide, deal lifecycle docs, troubleshooting | Month 4 |
 
-**Exit criteria**: Pull an image → CID is verified against on-chain record → if provider fails, deal re-routes automatically.
+**Exit criteria**: Pull image → scheduler verifies CID against on-chain deal record → CID matches → if primary provider returns error, scheduler re-routes to next provider within 60 seconds → image pulls successfully from fallback → `GET /providers` returns health status for all providers.
 
 ---
 
 ### Milestone 3: Confidential Scheduling — FHE Layer (€13,000)
 
 **Goal**: Encrypted scheduling inputs for zero-trust and regulated environments.
+
+**Risk note**: FHE integration is a research-level problem. Month 1 includes a 2-week spike to assess Zama fhEVM compatibility with off-chain scheduling. If fhEVM cannot support off-chain libp2p telemetry encryption, we will scope a custom FHE solution or defer the ciphertext scheduling component to a follow-up milestone, reallocating hours to benchmarks and the demo cluster.
 
 | Deliverable | Description | Timeline |
 |---|---|---|
@@ -228,7 +250,7 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 | Performance benchmarks | Latency/throughput comparison: plaintext vs FHE scheduling across 5-10 nodes | Month 5-6 |
 | Demo cluster | 5-node encrypted scheduling demo on Calibration | Month 6 |
 
-**Exit criteria**: 5-node cluster with FHE scheduling → nodes cannot read each other's resource metrics → scheduling decisions are correct → benchmark report published.
+**Exit criteria**: 5-node cluster with FHE enabled → nodes encrypt CPU/memory metrics before gossip → scheduling decisions use encrypted inputs → `GET /fhe/status` returns `enabled` → benchmark report shows latency overhead ≤ 3× plaintext baseline.
 
 ---
 
@@ -244,19 +266,19 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 | Mainnet migration plan | Deployment script + checklist for Filecoin mainnet | Month 4 |
 | Documentation overhaul | Architecture docs, API reference, contribution guide | Month 4-5 |
 
-**Exit criteria**: Canteen.sol V2 audited → 10-node CI passes → mainnet deployment script tested on Calibration.
+**Exit criteria**: Canteen.sol V2 audited with no critical findings → 10-node CI pipeline runs contract + integration tests across 10 nodes → all tests pass → mainnet deployment script tested on Calibration → documentation covers architecture, API, and contribution workflow.
 
 ---
 
 ## Budget Summary
 
-| Milestone | Focus | Amount | Estimated Hours | Timeline |
-|---|---|---|---|---|
-| M1 | Filecoin Deal Pipeline | €15,000 | ~600 hrs | Months 1-5 |
-| M2 | CID Verification + Multi-Provider | €12,000 | ~480 hrs | Months 1-4 |
-| M3 | FHE Confidential Scheduling | €13,000 | ~520 hrs | Months 1-6 |
-| M4 | Production Hardening | €5,000 | ~200 hrs | Months 1-5 |
-| **Total** | | **€45,000** | **~1,800 hrs** | **6 months** |
+| Milestone | Focus | Amount | Est. Hours | Timeline | Depends On |
+|---|---|---|---|---|---|
+| M1 | Filecoin Deal Pipeline | €15,000 | ~600 hrs | Months 1-4 | — |
+| M2 | CID Verification + Multi-Provider | €12,000 | ~480 hrs | Months 3-5 | M1 |
+| M3 | FHE Confidential Scheduling | €13,000 | ~520 hrs | Months 2-6 | Parallel |
+| M4 | Production Hardening | €5,000 | ~200 hrs | Months 5-6 | M1-M3 |
+| **Total** | | **€45,000** | **~1,800 hrs** | **6 months** | |
 
 ### Budget Breakdown by Task
 
@@ -323,7 +345,7 @@ Veil Stack is built entirely on open standards: libp2p (used by IPFS, Ethereum 2
 
 | Open Internet Principle | How Veil Stack Advances It |
 |---|---|
-| **User sovereignty** | Cluster governance lives on a public smart contract, not a vendor's API server |
+| **User sovereignty** | Cluster membership and configuration live on a public smart contract, not a vendor's API server |
 | **Open standards** | libp2p, FEVM, IPFS, Docker — all open protocols, no proprietary lock-in |
 | **Verifiable computation** | Every deployment is pinned to IPFS with a CID; every state change is on-chain |
 | **Privacy by design** | FHE scheduling (planned) enables confidential clusters without trusted intermediaries |
@@ -331,25 +353,25 @@ Veil Stack is built entirely on open standards: libp2p (used by IPFS, Ethereum 2
 
 ### European Dimension
 
-Cloud infrastructure concentration is a core concern for European digital sovereignty. The EU's Gaia-X initiative and the Data Act both seek to reduce dependency on non-European cloud providers. Veil Stack contributes to this goal by providing an open-source, standards-based orchestration layer that any European organization can deploy, audit, and govern — without dependency on AWS, GCP, or Azure.
+Cloud infrastructure concentration is a core concern for European digital sovereignty. The EU's Gaia-X initiative and the Data Act both seek to reduce dependency on non-European cloud providers. Veil Stack contributes to this goal by providing an open-source, standards-based orchestration layer that any European organization can deploy, audit, and operate — without dependency on AWS, GCP, or Azure.
 
 ### Measurable Outcomes (If Funded)
 
-- **M1**: Every container deployment triggers a Filecoin storage deal — first verifiable deployment pipeline
-- **M2**: CID-verified image retrieval — tamper-evident supply chain for container images
-- **M3**: 5-node FHE scheduling demo — first encrypted orchestration cluster on Filecoin
-- **M4**: Security audit + 10-node CI — production-grade open source orchestrator
+- **M1**: Every container deployment triggers a Filecoin storage deal — first verifiable deployment pipeline on FEVM
+- **M2**: CID-verified image retrieval with automatic provider failover — tamper-evident supply chain for container images
+- **M3**: 5-node FHE scheduling demo — first encrypted orchestration cluster on Filecoin (pending fhEVM compatibility assessment)
+- **M4**: Security audit passed + 10-node CI pipeline passing — production-grade open source orchestrator ready for mainnet
 
 ### Comparison to Existing Approaches
 
 | Project | Approach | Limitation | Veil Stack Advantage |
 |---|---|---|---|
-| **Kubernetes** | Centralized control plane (etcd + scheduler) | Single point of failure; vendor-controlled | No central plane; on-chain governance |
+| **Kubernetes** | Centralized control plane (etcd + scheduler) | Single point of failure; vendor-controlled | No central plane; on-chain membership management |
 | **Akash Network** | Decentralized compute marketplace (Cosmos) | Own L1 chain; no storage integration | FEVM-native; Filecoin deal origination |
 | **Flux** | Decentralized compute (Zcash) | Proprietary infrastructure | Open standards (libp2p, FEVM, IPFS) |
 | **Nomad** | Centralized scheduler with plugins | Still requires trusted server | Autonomous peers; no trusted coordinator |
 
-**Key differentiator**: Veil Stack is the only orchestrator that combines on-chain governance (FEVM), decentralized networking (libp2p), verifiable storage (IPFS/Filecoin), and confidential computing (FHE) in a single platform.
+**Key differentiator**: V1 delivers on-chain membership management (FEVM) and decentralized networking (libp2p). V2 will add verifiable storage (Filecoin deal origination) and confidential computing (FHE) — combining four capabilities no other orchestrator offers in a single platform.
 
 ---
 
@@ -362,8 +384,8 @@ Cloud infrastructure concentration is a core concern for European digital sovere
 | Initial state | 1 | Zero members, zero images |
 | Member lifecycle | 1 | Add/remove members, image assignment |
 | Image management | 1 | Add/remove images, rebalancing, port mapping |
-| Status reporting | 5 | reportStatus, getMemberStatus, event emission, non-member rejection, cleanup on removal |
-| Node counting | 1 | getNodeCount accuracy across add/remove |
+| Status reporting | 4 | reportStatus, getMemberStatus, event emission, non-member rejection, cleanup on removal |
+| Node counting | 2 | getNodeCount accuracy across add/remove |
 
 ### Integration Tests (`test/integration_test.js`)
 
@@ -385,7 +407,7 @@ Built and shipped Veil Stack V1 end-to-end: designed and implemented the event-d
 
 ### Sumanjeet ([@sumanjeet0012](https://github.com/sumanjeet0012))
 
-Active contributor to [py-libp2p](https://github.com/libp2p/py-libp2p): authored the pub-sub example ([PR #515](https://github.com/libp2p/py-libp2p/pull/515)) and leads the Kademlia DHT implementation ([#540](https://github.com/libp2p/py-libp2p/issues/540)) — directly relevant to Veil Stack's peer-to-peer coordination layer. Contributing to Veil Stack's libp2p integration and Filecoin deal pipeline development.
+Active contributor to [py-libp2p](https://github.com/libp2p/py-libp2p): authored the pub-sub example ([PR #515](https://github.com/libp2p/py-libp2p/pull/515)) and leads the Kademlia DHT implementation ([#540](https://github.com/libp2p/py-libp2p/issues/540)) — directly relevant to Veil Stack's peer-to-peer coordination layer. Sumanjeet will lead V2's CID verification pipeline (M2), multi-provider failover logic, end-to-end test suite, and CI infrastructure (M4), leveraging his libp2p networking expertise for the provider health monitoring and reputation system.
 
 ---
 
