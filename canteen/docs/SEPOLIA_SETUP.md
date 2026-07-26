@@ -253,7 +253,6 @@ You've successfully deployed Canteen on Sepolia testnet!
 
 ## 📚 Next Steps
 
-- **Add Token Gating**
 - **Deploy Multiple Nodes**
 - **Monitor Gas Usage**
 - **Test Failure Scenarios**

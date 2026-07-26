@@ -92,9 +92,7 @@ MetaMask approves
   ↓
 Dashboard ← Web3 Provider ← MetaMask
   ↓
-Check Token Balance (if enabled)
-  ↓
-Display Access Status
+Display Account Address
 ```
 
 ### 2. Node Registration
