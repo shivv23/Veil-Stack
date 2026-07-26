@@ -2,9 +2,13 @@
 
 ## Project Summary
 
-**Veil Stack** is a decentralized container orchestration platform governed by an FEVM (Filecoin EVM) smart contract. Node coordination runs over libp2p, cluster state is managed on-chain, and a planned FHE layer will enable confidential scheduling for regulated workloads.
+**Veil Stack** is a decentralized container orchestration platform that shifts infrastructure control from cloud vendor lock-in to open, community-governed systems.
 
-The long-term vision: link every scheduled workload to a **paid Filecoin storage deal**, turning container orchestration into a programmatic demand engine for Filecoin's storage market.
+The core problem: container orchestration — the layer that decides where code runs — is controlled by a small number of centralized vendors using proprietary schedulers and closed APIs. Veil Stack replaces this with an open smart contract on Filecoin EVM, peer-to-peer coordination via libp2p, and verifiable storage via IPFS/Filecoin.
+
+**What exists today (V1)**: A working orchestrator with on-chain member management, event-driven scheduling, container lifecycle control, a web dashboard, and 13 contract tests — deployed and verified on Filecoin Calibration.
+
+**What this funding builds (V2)**: A Filecoin storage deal pipeline (every deployment = a verifiable storage deal), CID-verified image retrieval, and a confidential scheduling layer using FHE for regulated workloads.
 
 - **Repository**: https://github.com/shivv23/Veil-Stack
 - **License**: MIT
@@ -16,14 +20,29 @@ The long-term vision: link every scheduled workload to a **paid Filecoin storage
 
 ## Problem Statement
 
-Container orchestration today is centralized (Kubernetes, Docker Swarm). This creates:
+### The Infrastructure Sovereignty Gap
 
-1. **Single points of failure** — if the orchestrator goes down, the entire stack is affected.
-2. **Vendor lock-in** — cloud providers control scheduling, pricing, and data placement.
-3. **No verifiable storage** — container images and deployment metadata sit on opaque registries with no cryptographic audit trail.
-4. **No privacy for multi-org clusters** — organizations must expose resource metrics to a shared control plane.
+Every application we use runs on containers managed by a handful of centralized orchestrators — Kubernetes, Docker Swarm, managed ECS. Three companies control the scheduling layer for most of the world's cloud-native workloads. This creates compounding risks:
 
-Veil Stack solves these by moving governance on-chain (FEVM), networking to libp2p (no central control plane), storage to IPFS/Filecoin (verifiable), and scheduling metrics to encrypted (FHE, planned).
+**1. Single Points of Failure**
+A Kubernetes control plane outage cascades to every workload it governs. In 2025, multiple major cloud providers experienced control plane failures that took down services across entire regions. When the orchestrator goes down, everything goes down — there is no fallback.
+
+**2. Vendor Lock-In and Pricing Power**
+Cloud providers control scheduling, pricing, and data placement. Organizations that build on managed orchestration services (EKS, GKE, AKS) face escalating costs and contractual dependency. Migrating away is technically costly and operationally risky, creating a ratchet effect.
+
+**3. No Verifiable Deployment Record**
+Container images sit on opaque registries. Deployment metadata is stored in proprietary databases. There is no cryptographic proof of what was deployed, when, or by whom. For regulated industries — healthcare, finance, government — this is a compliance gap with no current solution.
+
+**4. No Privacy in Multi-Org Clusters**
+Organizations sharing a cluster must expose resource metrics (CPU, memory, disk) to a shared control plane. In multi-tenant or consortium environments, this leaks competitive intelligence and violates data protection principles. Current orchestrators have no mechanism for encrypted scheduling.
+
+### Why This Is an Open Internet Problem
+
+The internet's infrastructure layer is becoming as concentrated as the applications it hosts. Container orchestration — the system that decides where code runs — is controlled by a small number of vendors using closed-source schedulers, proprietary APIs, and centralized consensus. This is the opposite of the open, user-operated internet.
+
+A decentralized orchestration layer, governed by an open smart contract on a public chain, with peer-to-peer coordination and verifiable storage, is a direct contribution to the open internet stack. It shifts infrastructure control from vendor platforms to the communities that run them.
+
+Veil Stack addresses all four gaps with a working implementation: on-chain governance (FEVM), decentralized networking (libp2p), verifiable storage (IPFS/Filecoin), and planned confidential computing (FHE).
 
 ---
 
@@ -241,15 +260,53 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 
 ---
 
-## Why This Matters
+## Societal Impact & Strategic Relevance
 
-| Current State | With Veil Stack V2 |
+### Who Benefits
+
+**European SMEs and Research Institutions**
+Small companies and universities building cloud-native applications are locked into hyperscaler orchestration (EKS, GKE). They pay escalating costs, lose control over data placement, and have no portability path. Veil Stack provides a self-sovereign alternative: deploy on your own infrastructure, governed by an open contract, with no vendor dependency.
+
+**Regulated Industries**
+Healthcare, finance, and government organizations cannot expose scheduling metrics to shared control planes. Veil Stack's planned FHE layer enables confidential scheduling — nodes participate in a cluster without seeing each other's resource data. This makes multi-org collaboration possible where it is currently blocked by data protection requirements.
+
+**The Filecoin Ecosystem**
+Every container deployment on Veil Stack originates a paid Filecoin storage deal. This creates programmatic demand for Filecoin's storage market, turning container orchestration into a demand engine for decentralized storage — directly advancing the Filecoin network's utility and economic sustainability.
+
+**Open Source Infrastructure Commons**
+Veil Stack is built entirely on open standards: libp2p (used by IPFS, Ethereum 2.0, Polkadot), FEVM (Filecoin's EVM), IPFS (verifiable content addressing), and Docker (open container runtime). No proprietary components. The entire stack is MIT-licensed and auditable.
+
+### Contribution to the Open Internet
+
+| Open Internet Principle | How Veil Stack Advances It |
 |---|---|
-| Containers deployed to opaque registries | Every deployment pinned to IPFS + Filecoin with CID verification |
-| No on-chain audit trail | StorageDeal struct on FEVM provides immutable deployment record |
-| Single cloud provider dependency | Multi-provider deal fallback across Filecoin storage providers |
-| Scheduling metrics exposed in plaintext | FHE-encrypted telemetry for regulated workloads |
-| Manual scaling | Event-driven on-chain governance with automatic rebalancing |
+| **User sovereignty** | Cluster governance lives on a public smart contract, not a vendor's API server |
+| **Open standards** | libp2p, FEVM, IPFS, Docker — all open protocols, no proprietary lock-in |
+| **Verifiable computation** | Every deployment is pinned to IPFS with a CID; every state change is on-chain |
+| **Privacy by design** | FHE scheduling (planned) enables confidential clusters without trusted intermediaries |
+| **Decentralized infrastructure** | No central control plane; nodes are autonomous peers coordinating via libp2p |
+
+### European Dimension
+
+Cloud infrastructure concentration is a core concern for European digital sovereignty. The EU's Gaia-X initiative and the Data Act both seek to reduce dependency on non-European cloud providers. Veil Stack contributes to this goal by providing an open-source, standards-based orchestration layer that any European organization can deploy, audit, and govern — without dependency on AWS, GCP, or Azure.
+
+### Measurable Outcomes (If Funded)
+
+- **M1**: Every container deployment triggers a Filecoin storage deal — first verifiable deployment pipeline
+- **M2**: CID-verified image retrieval — tamper-evident supply chain for container images
+- **M3**: 5-node FHE scheduling demo — first encrypted orchestration cluster on Filecoin
+- **M4**: Security audit + 10-node CI — production-grade open source orchestrator
+
+### Comparison to Existing Approaches
+
+| Project | Approach | Limitation | Veil Stack Advantage |
+|---|---|---|---|
+| **Kubernetes** | Centralized control plane (etcd + scheduler) | Single point of failure; vendor-controlled | No central plane; on-chain governance |
+| **Akash Network** | Decentralized compute marketplace (Cosmos) | Own L1 chain; no storage integration | FEVM-native; Filecoin deal origination |
+| **Flux** | Decentralized compute (Zcash) | Proprietary infrastructure | Open standards (libp2p, FEVM, IPFS) |
+| **Nomad** | Centralized scheduler with plugins | Still requires trusted server | Autonomous peers; no trusted coordinator |
+
+**Key differentiator**: Veil Stack is the only orchestrator that combines on-chain governance (FEVM), decentralized networking (libp2p), verifiable storage (IPFS/Filecoin), and confidential computing (FHE) in a single platform.
 
 ---
 
