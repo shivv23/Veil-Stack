@@ -25,7 +25,7 @@ contract('Canteen', accounts => {
   describe('Hosts and Images:', () => {
     var details;
 
-    it('test suite 1', async function() {
+    it('member lifecycle: add, assign, remove, rebalance', async function() {
       await canteen.addMember("host1");
       details = await canteen.getMemberDetails("host1");
       details[0].should.be.equal("");
@@ -71,7 +71,7 @@ contract('Canteen', accounts => {
   describe('Adding Ports and Image Details:', () => {
     var details;
 
-    it('test suite 1', async function() {
+    it('port mapping and image details', async function() {
       await canteen.addImage("image1", 2);
       details = await canteen.getImageDetails("image1");
       new BN(details[0]).eq(new BN(2)).should.be.true;

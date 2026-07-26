@@ -20,18 +20,18 @@
 ┌──────────▼───────────────────────────────▼─────────────────────┐
 │                      BLOCKCHAIN LAYER                          │
 │                                                                │
-│  ┌─────────────────┐         ┌─────────────────┐               │
-│  │   Ethereum      │         │   Filecoin      │               │
-│  │   Sepolia       │         │   Calibration   │               │
-│  │   (Testnet)     │         │   (Testnet)     │               │
-│  └────────┬────────┘         └────────┬────────┘               │
-│           │                           │                        │
-│      ┌────▼──────────────────────────▼─────┐                   │
+│  ┌─────────────────────────────────────────┐                   │
+│  │        Filecoin Calibration             │                   │
+│  │        (Testnet)                        │                   │
+│  └────────────────┬────────────────────────┘                   │
+│                   │                                            │
+│      ┌────────────▼────────────────────────┐                   │
 │      │    Canteen Smart Contract           │                   │
-│      │  - addImage()                        │                  │
-│      │  - addMember()                       │                  │
-│      │  - getImages()                       │                  │
-│      │  - Events: MemberJoin, MemberLeave, MemberImageUpdate    │
+│      │  - addImage()                       │                   │
+│      │  - addMember()                      │                   │
+│      │  - getImages()                      │                   │
+│      │  - reportStatus() / getMemberStatus()                   │
+│      │  - Events: MemberJoin, MemberLeave, MemberImageUpdate, StatusReport │
 │      └────────────────┬─────────────────────┘                  │
 │                       │                                        │
 └───────────────────────┼────────────────────────────────────────┘
@@ -47,13 +47,14 @@
 │  │  │  Config      │  │  Web3        │                          │     │
 │  │  │  Module      │  │  Service     │                          │     │
 │  │  │  - Chains    │  │  - Events    │                          │     │
-│  │  │  - Tokens    │  │  - Read-only │                          │     │
+│  │  │  - RPC URLs  │  │  - Read-only │                          │     │
 │  │  └──────────────┘  └──────────────┘                          │     │
 │  │                                                         │     │
 │  │  ┌─────────────────────────────────────────────────┐    │     │
 │  │  │         Scheduler (Event-Driven)                │    │     │
 │  │  │  - Listen to MemberJoin, MemberLeave, MemberImageUpdate events  │
 │  │  │  - Orchestrate container lifecycle              │    │     │
+│  │  │  - Report status back to contract               │    │     │
 │  │  └────────────────────┬────────────────────────────┘    │     │
 │  │                       │                                 │     │
 │  └───────────────────────┼─────────────────────────────────┘     │
@@ -130,106 +131,42 @@ Backend → Docker (create + start container)
 Container running!
 ```
 
-## Token Gating Flow
-
-```
-┌──────────────────────────────────────────┐
-│          User Connects Wallet            │
-└───────────────┬──────────────────────────┘
-                │
-                ▼
-┌──────────────────────────────────────────┐
-│   Check if Token Gating is Enabled       │
-└───────────┬──────────────┬───────────────┘
-            │              │
-       YES  │              │  NO
-            ▼              ▼
-┌─────────────────┐   ┌──────────────────┐
-│ Read Token      │   │  Grant Full      │
-│ Contract        │   │  Access          │
-│ balanceOf()     │   └──────────────────┘
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────────────┐
-│  balance >= required?   │
-└───────┬────────┬────────┘
-        │        │
-   YES  │        │  NO
-        ▼        ▼
-┌──────────┐  ┌──────────────┐
-│  Grant   │  │  Deny Access │
-│  Access  │  │  Show Error  │
-└──────────┘  └──────────────┘
-```
-
-## Multi-Chain Architecture
-
-```
-                    ┌──────────────────┐
-                    │   Dashboard      │
-                    │   (React App)    │
-                    └────────┬─────────┘
-                             │
-                    ┌────────▼─────────┐
-                    │  Chain Selector  │
-                    └────┬────────┬────┘
-                         │        │
-              Ethereum   │        │   Filecoin
-                         │        │
-          ┌──────────────▼───┐ ┌─▼──────────────┐
-          │  Ethereum Node   │ │  Filecoin Node │
-          │  (Sepolia)       │ │  (Calibration) │
-          └──────────────────┘ └────────────────┘
-                         │        │
-          ┌──────────────▼───┐ ┌─▼──────────────┐
-          │  Canteen         │ │  Canteen       │
-          │  Contract        │ │  Contract      │
-          │  0xAAA...        │ │  0xBBB...      │
-          └──────────────────┘ └────────────────┘
-```
-
 ## Security Model
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                   SECURITY LAYERS                   │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  Layer 1: MetaMask Wallet                           │
-│  ✓ Private keys stored locally by user              │
-│  ✓ User controls all transactions                   │
-│  ✓ No backend access to keys                        │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  Layer 2: Smart Contract                            │
-│  ✓ Immutable code on blockchain                     │
-│  ✓ Owner-only functions                             │
-│  ✓ Event-driven architecture                        │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  Layer 3: Token Gating (Optional)                   │
-│  ✓ ERC20/ERC721 balance verification                │
-│  ✓ On-chain access control                          │
-│  ✓ Real-time balance checks                         │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  Layer 4: Backend (Read-Only)                       │
-│  ✓ No private key storage                           │
-│  ✓ Event listener only                              │
-│  ✓ Cannot initiate transactions                     │
-│                                                     │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  Layer 5: Docker Isolation                          │
-│  ✓ Containerized workloads                          │
-│  ✓ Resource limits                                  │
-│  ✓ Network isolation                                │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                   SECURITY LAYERS                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Layer 1: MetaMask Wallet                                   │
+│  ✓ Private keys stored locally by user                      │
+│  ✓ User controls all transactions                           │
+│  ✓ No backend access to keys                                │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Layer 2: Smart Contract (Filecoin Calibration)             │
+│  ✓ Immutable code on-chain                                  │
+│  ✓ Owner-only functions (addMember, addImage, etc.)         │
+│  ✓ reportAddr validation on status reporting                │
+│  ✓ transferOwnership for admin handoff                      │
+│  ✓ Event-driven architecture                                │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Layer 3: Backend (Read-Only)                               │
+│  ✓ No private key storage (MetaMask mode)                   │
+│  ✓ Event listener only                                      │
+│  ✓ Cannot initiate transactions                             │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Layer 4: Docker Isolation                                  │
+│  ✓ Containerized workloads                                  │
+│  ✓ Resource limits (512MB RAM, 50% CPU)                     │
+│  ✓ Network isolation                                        │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Data Flow
@@ -249,10 +186,12 @@ Dashboard → Blockchain RPC → Contract State
 Backend:
 config.js ────────────┐
                       ├──► index.js ──► Start Application
-scheduler.js ─────────┘
+scheduler.js ─────────┤
+cluster.js ───────────┤
+web-server.js ────────┘
 
 Frontend:
-App.js ──► Render UI
+App.js ──► Render UI (React + D3 + Web3)
 ```
 
 ## Port Mapping

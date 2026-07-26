@@ -6,7 +6,7 @@ If you discover a security vulnerability in Veil Stack, please report it respons
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Instead, email: **security@veil-stack.dev** (or open a private GitHub advisory)
+Instead, use [GitHub Private Vulnerability Reporting](https://github.com/shivv23/Veil-Stack/security/advisories/new) or email **security@veil-stack.dev** (if available).
 
 ### What to include
 
@@ -26,7 +26,7 @@ Instead, email: **security@veil-stack.dev** (or open a private GitHub advisory)
 ### Smart Contract (Canteen.sol)
 
 - **Access control**: `addMember`, `removeMember`, `addImage`, `removeImage`, `addPortForImage` are restricted to the contract owner
-- **Status reporting**: `reportStatus` is callable by any active member — members can only report their own status
+- **Status reporting**: `reportStatus` is restricted to the contract owner's `reportAddr` — only the designated operator address can report node status
 - **Reentrancy**: No external calls in state-changing functions except event emission
 - **Integer overflow**: Solidity ^0.8.0 has built-in overflow checks
 

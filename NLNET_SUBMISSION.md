@@ -6,7 +6,7 @@
 
 The core problem: container orchestration — the layer that decides where code runs — is controlled by a small number of centralized vendors using proprietary schedulers and closed APIs. Veil Stack replaces this with an open smart contract on Filecoin EVM, peer-to-peer coordination via libp2p, and verifiable storage via IPFS/Filecoin.
 
-**What exists today (V1)**: A working orchestrator with on-chain member management, event-driven scheduling, container lifecycle control, a web dashboard, and 13 contract tests — deployed and verified on Filecoin Calibration.
+**What exists today (V1)**: A working orchestrator with on-chain member management, event-driven scheduling, container lifecycle control, a web dashboard, and 20 tests (8 contract + 5 integration + 7 dashboard) — deployed and verified on Filecoin Calibration.
 
 **What this funding builds (V2)**: A Filecoin storage deal pipeline (every deployment = a verifiable storage deal), CID-verified image retrieval, and a confidential scheduling layer using FHE for regulated workloads.
 
@@ -58,7 +58,7 @@ Veil Stack addresses all four gaps with a working implementation: on-chain gover
 | **Event-Driven Scheduler** | Listens for MemberJoin, MemberLeave, MemberImageUpdate, **StatusReport** on-chain events | Working in `scheduler.js` |
 | **Health Checks** | Container status reported on-chain; `getMemberStatus(host)` returns image + state + timestamp | Working |
 | **REST API** | `/status`, `/containers`, `/cluster`, `/ipfs` endpoints for backend introspection | Working in `web-server.js` |
-| **CLI Tool** | `veilstack` — status, containers, nodes, add-image, remove-image commands | Working in `veilstack.js` |
+| **CLI Tool** | `veilstack` — status, containers, nodes, add-image commands | Working in `veilstack.js` |
 | **IPFS Pinning** | Deployment manifests pinned to IPFS via Pinata for verifiable records | Working in `ipfs-service.js` |
 | **Docker Compose** | One-command local deployment with Docker socket proxy | `docker-compose.yml` |
 | **CI/CD** | GitHub Actions: contract tests (Ganache + Truffle), Docker Compose build, npm audit | `.github/workflows/test.yml` — passing |
@@ -252,33 +252,56 @@ Events: `MemberJoin`, `MemberLeave`, `MemberImageUpdate`, `StatusReport` — con
 
 | Milestone | Focus | Amount | Estimated Hours | Timeline |
 |---|---|---|---|---|
-| M1 | Filecoin Deal Pipeline | €15,000 | ~250 hrs | Months 1-5 |
-| M2 | CID Verification + Multi-Provider | €12,000 | ~200 hrs | Months 1-4 |
-| M3 | FHE Confidential Scheduling | €10,000 | ~170 hrs | Months 1-6 |
-| M4 | Production Hardening | €8,000 | ~130 hrs | Months 1-5 |
-| **Total** | | **€45,000** | **~750 hrs** | **6 months** |
+| M1 | Filecoin Deal Pipeline | €15,000 | ~600 hrs | Months 1-5 |
+| M2 | CID Verification + Multi-Provider | €12,000 | ~480 hrs | Months 1-4 |
+| M3 | FHE Confidential Scheduling | €10,000 | ~400 hrs | Months 1-6 |
+| M4 | Production Hardening | €8,000 | ~320 hrs | Months 1-5 |
+| **Total** | | **€45,000** | **~1,800 hrs** | **6 months** |
 
 ### Budget Breakdown by Task
 
+**Rate**: €25/hr (blended junior/senior across team of 3)
+
 | Task | Hours | Rate | Cost | Milestone |
 |---|---|---|---|---|
-| Solidity contract V2 (StorageDeal struct, events, access control) | 60 | €25/hr | €1,500 | M1 |
-| Lotus JSON-RPC integration (filecoin-service.js) | 50 | €25/hr | €1,250 | M1 |
-| Deal lifecycle in scheduler (propose → monitor → settle) | 40 | €25/hr | €1,000 | M1 |
-| Dashboard deal visualization tab | 30 | €25/hr | €750 | M1 |
-| Integration tests (deal proposal, status transitions) | 40 | €25/hr | €1,000 | M1 |
-| CID verification in scheduler | 45 | €25/hr | €1,125 | M2 |
-| Multi-provider fallback + retry logic | 50 | €25/hr | €1,250 | M2 |
-| End-to-end test suite (3-node, failure simulation) | 40 | €25/hr | €1,000 | M2 |
-| Documentation (provider setup, deal lifecycle) | 25 | €25/hr | €625 | M2 |
-| Zama FHE SDK integration | 60 | €25/hr | €1,500 | M3 |
-| Ciphertext scheduling (encrypted cost functions) | 50 | €25/hr | €1,250 | M3 |
-| FHE toggle + performance benchmarks | 35 | €25/hr | €875 | M3 |
-| Demo cluster (5-node FHE scheduling) | 25 | €25/hr | €625 | M3 |
-| Security audit coordination + remediation | 40 | €25/hr | €1,000 | M4 |
-| 10-node CI pipeline | 35 | €25/hr | €875 | M4 |
-| Federation model + role-based access | 30 | €25/hr | €750 | M4 |
-| Mainnet migration plan + documentation | 25 | €25/hr | €625 | M4 |
+| Canteen.sol V2: `StorageDeal` struct, events, `DealAnchored`/`DealExpired`/`DealSlashed` | 120 | €25/hr | €3,000 | M1 |
+| `filecoin-service.js`: Lotus JSON-RPC client, `Filecoin.MarketPublishDeal`, deal status polling | 100 | €25/hr | €2,500 | M1 |
+| Deal lifecycle in scheduler: propose → monitor → settle → alert | 80 | €25/hr | €2,000 | M1 |
+| Provider negotiation + multi-provider selection logic | 60 | €25/hr | €1,500 | M1 |
+| Integration tests: deal proposal, status transitions, CID verification | 60 | €25/hr | €1,500 | M1 |
+| Dashboard deal tab: status, provider, CID, term visualization | 50 | €25/hr | €1,250 | M1 |
+| Deal analytics dashboard: historical deals, provider performance | 40 | €25/hr | €1,000 | M1 |
+| Error handling: retry logic, exponential backoff, provider fallback | 40 | €25/hr | €1,000 | M1 |
+| Deal lifecycle documentation + provider setup guide | 30 | €25/hr | €750 | M1 |
+| Deployment manifest IPFS pinning + CID anchoring on-chain | 20 | €25/hr | €500 | M1 |
+| **M1 Subtotal** | **600** | | **€15,000** | |
+| CID verification in scheduler: hash check before `docker pull` | 80 | €25/hr | €2,000 | M2 |
+| Multi-provider failover: automatic re-propose on provider offline | 70 | €25/hr | €1,750 | M2 |
+| Provider health monitoring: uptime, latency, reputation scoring | 60 | €25/hr | €1,500 | M2 |
+| Deal retry logic: exponential backoff + provider rotation | 50 | €25/hr | €1,250 | M2 |
+| End-to-end test suite: 3-node cluster, failure simulation, CID integrity | 60 | €25/hr | €1,500 | M2 |
+| Dashboard: provider health view, failover status, CID audit log | 50 | €25/hr | €1,250 | M2 |
+| Provider reputation system: on-chain scoring, performance history | 40 | €25/hr | €1,000 | M2 |
+| IPFS content routing: redundant pinning across multiple gateways | 30 | €25/hr | €750 | M2 |
+| Documentation: provider setup, deal lifecycle, troubleshooting | 40 | €25/hr | €1,000 | M2 |
+| **M2 Subtotal** | **480** | | **€12,000** | |
+| Zama FHE SDK integration: encrypted telemetry from nodes | 100 | €25/hr | €2,500 | M3 |
+| Ciphertext scheduling: cost functions on encrypted inputs | 80 | €25/hr | €2,000 | M3 |
+| FHE toggle mechanism: `VEIL_FHE_MODE=enabled\|disabled` | 40 | €25/hr | €1,000 | M3 |
+| Performance benchmarks: latency/throughput plaintext vs FHE | 60 | €25/hr | €1,500 | M3 |
+| Demo cluster: 5-node encrypted scheduling on Calibration | 40 | €25/hr | €1,000 | M3 |
+| FHE key management: key generation, rotation, secure storage | 30 | €25/hr | €750 | M3 |
+| Benchmark visualization in dashboard | 20 | €25/hr | €500 | M3 |
+| FHE integration documentation + operator guide | 30 | €25/hr | €750 | M3 |
+| **M3 Subtotal** | **400** | | **€10,000** | |
+| Security audit coordination + remediation | 80 | €25/hr | €2,000 | M4 |
+| 10-node CI pipeline: automated multi-node cluster in GitHub Actions | 70 | €25/hr | €1,750 | M4 |
+| Federation model: cross-org cluster coordination, role-based access | 50 | €25/hr | €1,250 | M4 |
+| Mainnet migration: deployment script + checklist + dry-run on Calibration | 40 | €25/hr | €1,000 | M4 |
+| Documentation overhaul: architecture, API reference, contribution guide | 40 | €25/hr | €1,000 | M4 |
+| Load testing: 10-node cluster under sustained workload | 20 | €25/hr | €500 | M4 |
+| Monitoring: Prometheus metrics, alerting, log aggregation | 20 | €25/hr | €500 | M4 |
+| **M4 Subtotal** | **320** | | **€8,000** | |
 
 ---
 

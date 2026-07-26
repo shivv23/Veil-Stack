@@ -1,62 +1,124 @@
-# canteen.
+# Canteen
 
-A decentralized container orchestrating system (Kubernetes), running on FEVM (Filecoin EVM).
+A decentralized container orchestration system built on Filecoin EVM (FEVM).
 
-The modern tech startup/enterprise is comprised of tens or hundreds or even thousands of crucial technical components such as databases, backends, replicas of databases, stream processing platforms, etc.
+Canteen replaces centralized container orchestrators with an open smart contract on Filecoin, peer-to-peer coordination via libp2p, and verifiable storage via IPFS. Members register on-chain, images are managed through the contract, and an event-driven scheduler orchestrates container lifecycle across the cluster.
 
-These extremely sensitive moving components comprise a company's tech stack; typically living distributed amongst a cluster of servers.
+## Architecture
 
-Should any of these moving components go down due to minor faults, a company could go completely unoperational resulting in hundreds of thousands dollars lost in practice. Imagine the stock exchange's database going down for even a hour!
+```
+Operator / Dashboard (React + D3 + Web3)
+              │
+    ┌─────────┼─────────┐
+    ▼         ▼         ▼
+  FEVM Contract (Canteen.sol)
+    │         │         │
+    ▼         ▼         ▼
+  Node A    Node B    Node C
+  (libp2p)  (libp2p)  (libp2p)
+  +scheduler +scheduler +scheduler
+    │         │         │
+    ▼         ▼         ▼
+  Docker    Docker    Docker
+```
 
-Large tech giants such as Google aim to solve this problem by introducing a new tech component to their tech stack: a container orchestrator.
+## Key Features
 
-A container orchestrator efficiently distributes containerized tech components given a set of servers to maximize a tech components performance and utilization of computational resources, and supervises each and every tech components lifecycle to ensure they get restarted or backed up should anything ever go wrong with the component.
+- **On-chain governance** — cluster membership, image registry, and status reporting on FEVM
+- **Event-driven scheduling** — reacts to on-chain events (MemberJoin, MemberLeave, MemberImageUpdate, StatusReport)
+- **libp2p networking** — TCP transport, Noise encryption, GossipSub heartbeat gossip
+- **Docker runtime** — pull, create, start, stop containers with resource limits (512MB RAM, 50% CPU)
+- **Web dashboard** — React + D3 force-directed cluster visualization with MetaMask integration
+- **REST API** — `/status`, `/containers`, `/cluster`, `/health` endpoints
+- **CLI tool** — `veilstack status|containers|nodes|add-image`
+- **CI/CD** — GitHub Actions: contract tests + Docker compose build
 
-Google's decades of work with hundreds of thousand of servers led to a container orchestration platform popularly used in thousands of companies worldwide known as Kubernetes. Other solutions prior to Kubernetes have existed such as the extremely famous Apache DC/OS.
+## Quick Start
 
-As good as this may sound though, what are the disadvantages to employing a container orchestrator in a company's tech stack?
+### Docker Compose (Recommended)
 
-* A container orchestrator remains to be a single source of potential failure for an entire distributed tech stack. If Kubernetes goes down, the tech stack may potentially remain dysfunctional.
+```bash
+cd canteen
+cp .env.example .env  # Edit with your values
+docker compose up --build
+```
 
-* A container orchestrator is typically extremely complicated, requires large amounts of configuration, and requires other technical components running in the stack (Kubernetes uses a configuration database known as etcd. which has its own set of scaling problems).
+### Local Development
 
-* A container orchestrator is heavy and requires a large number of computational resources.
+```bash
+cd canteen
+npm install
+cp .env.example .env
+npm start
+```
 
+### Running Tests
 
-## Introducing canteen
+```bash
+# Contract tests (requires Ganache)
+npx ganache --port 8545 --deterministic &
+sleep 3
+npx truffle test --config truffle-config.cjs
+kill %1
 
-canteen is an extremely scalable container orchestrator that is fault-tolerant, easy to install, easy to distribute, and most importantly decentralized through the utility of an Ethereum smart contract.
+# Integration tests (requires running backend on port 5001)
+node test/integration_test.js
+```
 
-canteen efficiently schedules and orchestrates designated Docker containers to a set of servers based on speculated/provisioned container resource limits.
+## Smart Contract
 
-### presentation:
-https://docs.google.com/presentation/d/16UA1B5uPBWCZlvGwPWEaRGOn3Be_-StJ2hxTuyMRDkc/edit?usp=sharing
+Deployed on **Filecoin Calibration** at [`0x686d5d622298cfca880168Badf83ac3F71C4a33A`](https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A)
 
+Key functions:
+- `addMember(host)` / `removeMember(host)` — cluster membership
+- `addImage(name, replicas)` / `removeImage()` — container registry
+- `rebalanceWithUnfortunateImage()` — ratio-based replica scheduling
+- `reportStatus(host, image, state)` — on-chain status reporting
+- `getMemberStatus(host)` / `getNodeCount()` — cluster queries
+- `transferOwnership(newOwner)` — admin handoff
 
-## Installing canteen
+## CLI
 
-All you need to do to have canteen work with your tech stack is have your tech components in a Docker container uploaded on Docker Hub.
+```bash
+npx veilstack status          # Node and cluster status
+npx veilstack containers      # List running containers
+npx veilstack nodes           # List cluster members
+npx veilstack add-image       # Register an image on-chain
+```
 
-Deploy the smart contract on whatever chain supports the Ethereum Virtual Machine, and edit the configuration of canteen's node file to point to the smart contract and chain.
+## Configuration
 
-Run canteen's node on your set of servers and register your Docker images on the smart contract.
+Copy `.env.example` to `.env` and configure:
 
-canteen will then orchestrate your Docker containers based on all registered server node resource limitations and keep your entire tech stack fault tolerant and decentralized!
+```bash
+ACTIVE_CHAIN=filecoin
+FIL_CONTRACT_ADDRESS=0x686d5d622298cfca880168Badf83ac3F71C4a33A
+FIL_RPC_URL=https://api.calibration.node.glif.io/rpc/v1
+# PRIVATE_KEY=0x...  # Optional: enables on-chain status reporting
+```
 
-canteen can even replicate Docker containers to any amount of servers you choose should you wish to keep replicas of your database/web server/etc. on your cluster of servers.
+## Project Structure
 
-## Specifications
+```
+canteen/
+├── contracts/
+│   ├── Canteen.sol          # FEVM smart contract
+│   └── Migrations.sol       # Truffle migrations
+├── scheduler.js             # Event-driven scheduler + container lifecycle
+├── cluster.js               # libp2p networking (TCP, Noise, GossipSub)
+├── web-server.js            # REST API (/status, /containers, /cluster, /health)
+├── index.js                 # Entry point, graceful shutdown
+├── config.js                # Multi-chain configuration
+├── veilstack.js             # CLI tool
+├── ipfs-service.js          # IPFS pinning via Pinata
+├── logger.js                # Structured JSON logging
+├── test/
+│   ├── canteen_test.js      # 8 contract tests
+│   └── integration_test.js  # 5 integration tests
+├── dashboard/               # React + D3 + Web3 dashboard
+└── deploy-fevm.cjs          # FEVM deployment script
+```
 
-Given that this was made for a 36-hour hackathon, we only implemented a priority-based Round-robin scheduling mechanism for choosing a set of servers to deploy a set of Docker images to.
+## License
 
-Each canteen node uses libp2p gossip heartbeats off-chain to determine the liveliness of all servers to efficiently schedule Docker containers to healthy servers. Should a server go down, images will be minimally rescheduled to ensure minimal product/service downtime.
-
-## Next Steps
-
-With a working MVP, we have demonstrated the potential of decentralizing container orchestration and its effectiveness. We will now be working on 
-
-* Developing other scheduling mechanisms for choosing the set of servers and proving the option to the user. 
-
-* Moving task-intensive scheduling algorithms off-chain by using a state-channel infrastructure. 
-
-* Creating a decentralized cloud in which people may pay or be paid for hosting decentralized tech components of a company's tech stack, removing reliance on a single monopoly cloud service.
+MIT

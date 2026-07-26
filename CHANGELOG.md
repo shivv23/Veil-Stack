@@ -4,14 +4,14 @@ All notable changes to Veil Stack will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [0.2.0] - 2025-07-22
+## [0.2.0] - 2026-07-22
 
 ### Added
 
 - **On-chain feedback loop**: Scheduler reports container state (running/stopped/crashed) to Canteen.sol via `reportStatus()`
 - **Status reporting contract functions**: `reportStatus()`, `getMemberStatus()`, `getNodeCount()`, `StatusReport` event
 - **REST API endpoints**: `/status`, `/containers`, `/cluster`, `/ipfs` for backend introspection
-- **CLI tool**: `veilstack` — status, containers, nodes, add-image, remove-image commands
+- **CLI tool**: `veilstack` — status, containers, nodes, add-image commands
 - **Container resource limits**: 512MB memory, 50% CPU, on-failure restart policy (max 3 retries)
 - **Health checks**: Container status monitored every 10 seconds; auto-restart on crash
 - **Docker Compose**: One-command local deployment with socket proxy
@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Event polling interval reduced to 15 seconds for faster response
 - Contract ABI synced to `dashboard/src/Canteen.json`
 
-## [0.1.0] - 2025-07-01
+## [0.1.0] - 2026-07-01
 
 ### Added
 

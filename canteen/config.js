@@ -37,12 +37,6 @@ export const CHAINS = {
   }
 }
 
-export const TOKEN_CONFIG = {
-  address: process.env.TOKEN_CONTRACT_ADDRESS,
-  requiredBalance: process.env.REQUIRED_TOKEN_BALANCE || '1',
-  symbol: process.env.TOKEN_SYMBOL || 'CANTEEN'
-}
-
 export const SERVER_CONFIG = {
   port: process.env.PORT || 5000,
   webPort: process.env.WEB_PORT || 5001,
@@ -77,12 +71,8 @@ export function validateConfig() {
   
   // Check RPC URL
   if (chain.rpcUrl.includes('YOUR_INFURA_KEY')) {
-    warnings.push(`⚠️  Using placeholder RPC URL for ${chain.name}. Set ${chain.key.toUpperCase()}_RPC_URL in .env`)
-  }
-  
-  // Check token config for production
-  if (process.env.NODE_ENV === 'production' && !TOKEN_CONFIG.address) {
-    warnings.push('⚠️  TOKEN_CONTRACT_ADDRESS not set. Token gating will be disabled.')
+    const envVar = chain.key === 'ethereum' ? 'ETH_RPC_URL' : 'FIL_RPC_URL'
+    warnings.push(`⚠️  Using placeholder RPC URL for ${chain.name}. Set ${envVar} in .env`)
   }
   
   return { errors, warnings }

@@ -14,7 +14,6 @@
     "test:integration": "npx mocha --timeout 10000 test/integration_test.js",
     "compile": "truffle compile",
     "console": "truffle console",
-    "migrate:sepolia": "truffle migrate --network sepolia",
     "migrate:filecoin": "truffle migrate --network filecoin",
     "migrate:dev": "truffle migrate --network development --reset",
     "ganache": "npx ganache --port 8545 --deterministic",
