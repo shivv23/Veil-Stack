@@ -360,11 +360,11 @@ Cloud infrastructure concentration is a core concern for European digital sovere
 
 ### Shivam Kumar ([@shivv23](https://github.com/shivv23))
 
-Built Veil Stack V1 end-to-end: designed and implemented the event-driven scheduler, libp2p cluster networking (TCP transport, Noise encryption, GossipSub), Docker runtime integration, web dashboard (React + D3), REST API, CLI tool, CI/CD pipeline, and the full test suite. Background in distributed systems and cloud-native infrastructure (Go, Rust, TypeScript, Python) with prior contributions to [Meshery](https://github.com/meshery/meshery) (CNCF) and [libp2p](https://github.com/libp2p).
+Built and shipped Veil Stack V1 end-to-end: designed and implemented the event-driven scheduler, libp2p cluster networking (TCP transport, Noise encryption, GossipSub), Docker runtime integration, web dashboard (React + D3), REST API, CLI tool, CI/CD pipeline, and the full test suite. Extended `Canteen.sol` with `reportAddr` validation, `transferOwnership()`, and on-chain status reporting. Background in distributed systems and cloud-native infrastructure (Go, Rust, TypeScript, Python) with prior contributions to [Meshery](https://github.com/meshery/meshery) (CNCF) and [libp2p](https://github.com/libp2p).
 
 ### Sumanjeet ([@sumanjeet0012](https://github.com/sumanjeet0012))
 
-Developed Canteen.sol — the FEVM smart contract governing cluster membership, image registry, replica balancing, and on-chain status reporting. Active contributor to [py-libp2p](https://github.com/libp2p/py-libp2p): authored the pub-sub example ([PR #515](https://github.com/libp2p/py-libp2p/pull/515)) and leads the Kademlia DHT implementation ([#540](https://github.com/libp2p/py-libp2p/issues/540)) — directly relevant to Veil Stack's peer-to-peer coordination layer.
+Active contributor to [py-libp2p](https://github.com/libp2p/py-libp2p): authored the pub-sub example ([PR #515](https://github.com/libp2p/py-libp2p/pull/515)) and leads the Kademlia DHT implementation ([#540](https://github.com/libp2p/py-libp2p/issues/540)) — directly relevant to Veil Stack's peer-to-peer coordination layer. Contributing to Veil Stack's libp2p integration and Filecoin deal pipeline development.
 
 ---
 
