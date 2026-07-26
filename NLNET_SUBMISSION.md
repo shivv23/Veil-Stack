@@ -360,11 +360,11 @@ Cloud infrastructure concentration is a core concern for European digital sovere
 
 ### Shivam Kumar ([@shivv23](https://github.com/shivv23))
 
-Full-stack developer with experience across distributed systems, cloud-native infrastructure, and open source contributions. Active contributor to [Meshery](https://github.com/meshery/meshery) (CNCF cloud native manager), [libp2p](https://github.com/libp2p) peer-to-peer networking, and [Sugar Labs](https://github.com/sugarlabs/musicblocks) education software. Technical stack spans Go, Rust, TypeScript, and Python with production experience in Docker, Kubernetes, and cloud infrastructure (AWS, GCP). Built and shipped Veil Stack V1 — smart contract, scheduler, libp2p cluster, web dashboard, CI/CD pipeline.
+Built Veil Stack V1 end-to-end: designed and implemented the event-driven scheduler, libp2p cluster networking (TCP transport, Noise encryption, GossipSub), Docker runtime integration, web dashboard (React + D3), REST API, CLI tool, CI/CD pipeline, and the full test suite. Background in distributed systems and cloud-native infrastructure (Go, Rust, TypeScript, Python) with prior contributions to [Meshery](https://github.com/meshery/meshery) (CNCF) and [libp2p](https://github.com/libp2p).
 
 ### Sumanjeet ([@sumanjeet0012](https://github.com/sumanjeet0012))
 
-Open source contributor with 100+ public repositories and active involvement in the [libp2p](https://github.com/libp2p/py-libp2p) ecosystem. Core contributor to py-libp2p universal connectivity project — authored the pub-sub example ([PR #515](https://github.com/libp2p/py-libp2p/pull/515)) and leads the Kademlia DHT implementation ([#540](https://github.com/libp2p/py-libp2p/issues/540)). Experience with decentralized systems, agent-based architectures, and peer-to-peer protocols. Developed Canteen.sol smart contract and FEVM integration for Veil Stack.
+Developed Canteen.sol — the FEVM smart contract governing cluster membership, image registry, replica balancing, and on-chain status reporting. Active contributor to [py-libp2p](https://github.com/libp2p/py-libp2p): authored the pub-sub example ([PR #515](https://github.com/libp2p/py-libp2p/pull/515)) and leads the Kademlia DHT implementation ([#540](https://github.com/libp2p/py-libp2p/issues/540)) — directly relevant to Veil Stack's peer-to-peer coordination layer.
 
 ---
 
