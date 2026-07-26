@@ -3,6 +3,7 @@ import { Web3 } from 'web3'
 import fs from 'fs'
 import path from 'path'
 import Docker from 'dockerode'
+import { EventEmitter } from 'events'
 import Cluster from './cluster.js'
 import ipfs from './ipfs-service.js'
 import createLogger from './logger.js'
@@ -12,13 +13,30 @@ const log = createLogger('scheduler')
 const __dirname = new URL('.', import.meta.url).pathname
 const Canteen = JSON.parse(fs.readFileSync(path.resolve(__dirname, './dashboard/src/Canteen.json'), 'utf-8'))
 
-class CanteenScheduler {
+const HEALTH_CHECK_INTERVAL = 10000
+const METRICS_INTERVAL = 30000
+const MAX_RESTART_ATTEMPTS = 5
+const BACKOFF_BASE_MS = 2000
+const STALE_REPORT_THRESHOLD = 60000
+
+class CanteenScheduler extends EventEmitter {
+  constructor() {
+    super()
+    this.containerStatus = { image: '', state: 'idle', lastReported: 0 }
+    this.containerHealthCheck = null
+    this.metricsInterval = null
+    this.metrics = { cpu: 0, memory: 0, memoryLimit: 0, networkRx: 0, networkTx: 0, restarts: 0 }
+    this.restartAttempts = 0
+    this.lastRestartTime = 0
+    this.peerStatuses = new Map()
+    this.startTime = Date.now()
+    this._gracefulShutdown = this._gracefulShutdown.bind(this)
+  }
+
   async start(provider, contractAddress, privateKey, dockerPath, readOnlyMode = false) {
     const web3 = new Web3(provider)
 
     this.readOnlyMode = readOnlyMode || !privateKey
-    this.containerStatus = { image: '', state: 'idle', lastReported: 0 }
-    this.containerHealthCheck = null
     this.startTime = Date.now()
 
     let acct, fromAddress
@@ -76,11 +94,15 @@ class CanteenScheduler {
     this.accountAddress = fromAddress
     this.web3 = web3
 
+    process.on('SIGTERM', this._gracefulShutdown)
+    process.on('SIGINT', this._gracefulShutdown)
+
     try {
       if (!this.readOnlyMode) {
         await this.registerNode()
         this._startLoop()
         this.listenToEvents()
+        this._startMetricsCollection()
       } else {
         this.listenToEvents()
         await this._bootstrapOnRestart()
@@ -111,6 +133,79 @@ class CanteenScheduler {
     }
   }
 
+  _startMetricsCollection() {
+    if (this.metricsInterval) return
+
+    this.metricsInterval = setInterval(async () => {
+      if (!this.container || !this.docker) return
+
+      try {
+        const stats = await this.docker.getContainer(this.container.id).stats({ stream: false })
+        this.metrics.cpu = this._calculateCpuPercent(stats)
+        this.metrics.memory = stats.memory_stats.usage || 0
+        this.metrics.memoryLimit = stats.memory_stats.limit || 0
+
+        const networks = stats.networks || {}
+        let rx = 0, tx = 0
+        for (const iface of Object.values(networks)) {
+          rx += iface.rx_bytes || 0
+          tx += iface.tx_bytes || 0
+        }
+        this.metrics.networkRx = rx
+        this.metrics.networkTx = tx
+
+        this.emit('metrics', this.metrics)
+      } catch (error) {
+        log.debug('metrics collection failed', { error: error.message })
+      }
+    }, METRICS_INTERVAL)
+  }
+
+  _calculateCpuPercent(stats) {
+    try {
+      const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - (stats.precpu_stats?.cpu_usage?.total_usage || 0)
+      const systemDelta = stats.cpu_stats.system_cpu_usage - (stats.precpu_stats?.system_cpu_usage || 0)
+      const cpuCount = stats.cpu_stats.online_cpus || 1
+      if (systemDelta > 0 && cpuDelta >= 0) {
+        return Math.round((cpuDelta / systemDelta) * cpuCount * 10000) / 100
+      }
+    } catch (_) {}
+    return 0
+  }
+
+  _getRestartDelay() {
+    const delay = Math.min(BACKOFF_BASE_MS * Math.pow(2, this.restartAttempts), 60000)
+    return delay
+  }
+
+  async _gracefulShutdown() {
+    log.info('graceful shutdown initiated')
+    this._stopContainerHealthCheck()
+    if (this.metricsInterval) {
+      clearInterval(this.metricsInterval)
+      this.metricsInterval = null
+    }
+
+    if (this.container) {
+      try {
+        await this._reportStatus(this.scheduledImage || '', 'stopped')
+      } catch (_) {}
+
+      try {
+        log.info('sending SIGTERM to container')
+        await this.container.stop({ t: 10 })
+        await this.container.remove()
+        log.info('container stopped and removed')
+      } catch (error) {
+        log.error('graceful container stop failed', { error: error.message })
+      }
+    }
+
+    this._stopLoop()
+    process.removeListener('SIGTERM', this._gracefulShutdown)
+    process.removeListener('SIGINT', this._gracefulShutdown)
+  }
+
   async _bootstrapOnRestart() {
     const host = Cluster.getHost()
     if (!host) return
@@ -124,7 +219,7 @@ class CanteenScheduler {
         log.info('node registered on-chain', { host, image: assignedImage || '(none)' })
         this._startLoop()
       } else {
-        log.info('node not registered, waiting for MetaMask registration', { host })
+        log.info('node not registered, waiting for MemberJoin', { host })
       }
     } catch (error) {
       log.warn('could not check on-chain registration, waiting for MemberJoin', { error: error.message })
@@ -187,7 +282,8 @@ class CanteenScheduler {
           const { host, image } = event.returnValues
           log.info('image updated', { host, image })
         } else if (event.event === 'StatusReport') {
-          const { host, image, state } = event.returnValues
+          const { host, image, state, timestamp } = event.returnValues
+          this.peerStatuses.set(host, { image, state, timestamp: Number(timestamp), lastSeen: Date.now() })
           if (host !== Cluster.getHost()) {
             log.info('peer status report', { host, image, state })
           }
@@ -199,6 +295,24 @@ class CanteenScheduler {
     } catch (error) {
       log.error('event polling failed', { error: error.message })
     }
+  }
+
+  getPeerStatuses() {
+    const now = Date.now()
+    const active = []
+    for (const [host, status] of this.peerStatuses.entries()) {
+      if (now - status.lastSeen < STALE_REPORT_THRESHOLD) {
+        active.push({ host, ...status })
+      }
+    }
+    return active
+  }
+
+  getClusterLoad() {
+    const peers = this.getPeerStatuses()
+    const running = peers.filter(p => p.state === 'running').length
+    const total = peers.length + 1
+    return { running, total, ratio: total > 0 ? running / total : 0 }
   }
 
   async loop() {
@@ -231,9 +345,7 @@ class CanteenScheduler {
         log.info('node already active, skipping registration', { host })
         return
       }
-    } catch (e) {
-      // If call fails, continue to attempt registration
-    }
+    } catch (e) {}
 
     const registerMember = contract.methods.addMember(host)
 
@@ -260,14 +372,31 @@ class CanteenScheduler {
   _setContainerStatus(image, state) {
     this.containerStatus = { image, state, lastReported: Date.now() }
     log.info('container status updated', { image: image || 'none', state })
+    this.emit('statusChange', this.containerStatus)
   }
 
   getContainerStatus() {
     return this.containerStatus
   }
 
+  getMetrics() {
+    return { ...this.metrics, restarts: this.metrics.restarts }
+  }
+
   getUptime() {
     return Math.floor((Date.now() - this.startTime) / 1000)
+  }
+
+  getHealthSummary() {
+    return {
+      container: this.containerStatus,
+      metrics: this.getMetrics(),
+      uptime: this.getUptime(),
+      readOnlyMode: this.readOnlyMode,
+      dockerConnected: !!this.docker,
+      clusterLoad: this.getClusterLoad(),
+      peerCount: this.getPeerStatuses().length
+    }
   }
 
   async _reportStatus(image, state) {
@@ -311,21 +440,34 @@ class CanteenScheduler {
 
           if (inspect.State.Restarting) {
             log.info('docker restart policy active, waiting')
+          } else if (this.restartAttempts < MAX_RESTART_ATTEMPTS) {
+            const delay = this._getRestartDelay()
+            this.restartAttempts++
+            this.metrics.restarts++
+            this.lastRestartTime = Date.now()
+            log.info('auto-restarting container', { attempt: this.restartAttempts, delay, containerId: container.id.substring(0, 12) })
+
+            setTimeout(async () => {
+              try {
+                await container.start()
+                log.info('container restarted', { containerId: container.id.substring(0, 12) })
+                this._setContainerStatus(scheduledImage, 'running')
+              } catch (restartErr) {
+                log.error('container restart failed', { error: restartErr.message })
+                this._setContainerStatus(scheduledImage, 'crashed')
+              }
+            }, delay)
           } else {
-            log.info('container stopped unexpectedly, restarting')
-            try {
-              await container.start()
-              log.info('container restarted', { containerId: container.id.substring(0, 12) })
-              this._setContainerStatus(scheduledImage, 'running')
-            } catch (restartErr) {
-              log.error('container restart failed', { error: restartErr.message })
-            }
+            log.error('max restart attempts reached, giving up', { attempts: this.restartAttempts })
+            this._setContainerStatus(scheduledImage, 'failed')
           }
+        } else if (running) {
+          this.restartAttempts = 0
         }
       } catch (error) {
         log.error('health check failed', { error: error.message })
       }
-    }, 10000)
+    }, HEALTH_CHECK_INTERVAL)
   }
 
   _stopContainerHealthCheck() {
@@ -333,6 +475,54 @@ class CanteenScheduler {
       clearInterval(this.containerHealthCheck)
       this.containerHealthCheck = null
     }
+  }
+
+  async _tryCreateContainer(scheduledImage, docker) {
+    let ports = []
+    try {
+      const contractPorts = await this.contract.methods.getPortsForImage(scheduledImage).call()
+      if (contractPorts && contractPorts.length > 0) {
+        ports = contractPorts.map(p => ({ host: p[0], container: p[1] }))
+        log.info('using contract port mapping', { ports: JSON.stringify(ports) })
+      }
+    } catch (_) {}
+    if (ports.length === 0) {
+      try {
+        const imageInfo = await docker.getImage(scheduledImage).inspect()
+        const exposed = imageInfo.ContainerConfig?.ExposedPorts || imageInfo.Config?.ExposedPorts || {}
+        ports = Object.keys(exposed).map(p => {
+          const num = parseInt(p.split('/')[0])
+          return { host: num, container: num }
+        })
+        if (ports.length > 0) {
+          log.info('detected ports from image metadata', { ports: JSON.stringify(ports) })
+        }
+      } catch (_) {}
+    }
+    if (ports.length === 0) {
+      const defaultPort = parseInt(process.env.DEFAULT_PORT) || 8080
+      ports = [{ host: defaultPort, container: defaultPort }]
+      log.warn('no port info found, using default', { image: scheduledImage, port: defaultPort })
+    }
+
+    const exposedPorts = {}
+    const portBindings = {}
+    for (const p of ports) {
+      exposedPorts[`${p.container}/tcp`] = {}
+      portBindings[`${p.container}/tcp`] = [{ HostPort: `${p.host}` }]
+    }
+
+    return docker.createContainer({
+      Image: scheduledImage,
+      ExposedPorts,
+      HostConfig: {
+        PortBindings,
+        RestartPolicy: { Name: 'on-failure', MaximumRetryCount: 3 },
+        Memory: parseInt(process.env.CONTAINER_MEMORY_LIMIT) || 512 * 1024 * 1024,
+        CpuPeriod: 100000,
+        CpuQuota: parseInt(process.env.CONTAINER_CPU_QUOTA) || 50000
+      }
+    })
   }
 
   async updateScheduler(scheduledImage) {
@@ -372,63 +562,12 @@ class CanteenScheduler {
 
         log.info('deploying container', { image: scheduledImage })
 
-          const containerStatus = containers.find(c => c.Image === scheduledImage)
-
-        const scheduleImage = async () => {
-          const containers = await this.docker.listContainers()
         const containerStatus = containers.find(c => c.Image === scheduledImage)
 
+        const scheduleImage = async () => {
           let container
           if (!containerStatus) {
-            let ports = []
-            try {
-              const contractPorts = await this.contract.methods.getPortsForImage(scheduledImage).call()
-              if (contractPorts && contractPorts.length > 0) {
-                ports = contractPorts.map(p => ({ host: p[0], container: p[1] }))
-                log.info('using contract port mapping', { ports: JSON.stringify(ports) })
-              }
-            } catch (_) {}
-            if (ports.length === 0) {
-              try {
-                const imageInfo = await this.docker.getImage(scheduledImage).inspect()
-                const exposed = imageInfo.ContainerConfig?.ExposedPorts || imageInfo.Config?.ExposedPorts || {}
-                ports = Object.keys(exposed).map(p => {
-                  const num = parseInt(p.split('/')[0])
-                  return { host: num, container: num }
-                })
-                if (ports.length > 0) {
-                  log.info('detected ports from image metadata', { ports: JSON.stringify(ports) })
-                }
-              } catch (_) {}
-            }
-            if (ports.length === 0) {
-              const defaultPort = parseInt(process.env.DEFAULT_PORT) || 8080
-              ports = [{ host: defaultPort, container: defaultPort }]
-              log.warn('no port info found, using default', { image: scheduledImage, port: defaultPort })
-            }
-
-            const exposedPorts = {}
-            const portBindings = {}
-            for (const p of ports) {
-              exposedPorts[`${p.container}/tcp`] = {}
-              portBindings[`${p.container}/tcp`] = [{ HostPort: `${p.host}` }]
-            }
-
-            container = await this.docker.createContainer({
-              Image: scheduledImage,
-              ExposedPorts: exposedPorts,
-              HostConfig: {
-                PortBindings: portBindings,
-                RestartPolicy: {
-                  Name: 'on-failure',
-                  MaximumRetryCount: 3
-                },
-                Memory: 512 * 1024 * 1024,
-                CpuPeriod: 100000,
-                CpuQuota: 50000
-              }
-            })
-
+            container = await this._tryCreateContainer(scheduledImage, this.docker)
             log.info('container created', { image: scheduledImage, containerId: container.id.substring(0, 12) })
           } else {
             container = this.docker.getContainer(containerStatus['Id'])
@@ -438,7 +577,9 @@ class CanteenScheduler {
           const oldContainer = this.container
           if (oldContainer) {
             log.info('removing old container', { containerId: oldContainer.id.substring(0, 12) })
-            await oldContainer.stop()
+            try {
+              await oldContainer.stop({ t: 5 })
+            } catch (_) {}
             await oldContainer.remove()
           }
 
@@ -464,11 +605,14 @@ class CanteenScheduler {
           } catch (_) {}
 
           this.container = container
+          this.restartAttempts = 0
         }
 
         if (containerStatus && containerStatus.State === 'running') {
           let container = this.docker.getContainer(containerStatus['Id'])
-          await container.stop()
+          try {
+            await container.stop({ t: 5 })
+          } catch (_) {}
           await container.remove()
 
           log.info('removed existing running container', { image: scheduledImage })
@@ -486,6 +630,11 @@ class CanteenScheduler {
 
     this._stopContainerHealthCheck()
 
+    if (this.metricsInterval) {
+      clearInterval(this.metricsInterval)
+      this.metricsInterval = null
+    }
+
     if (this.eventPollingInterval) {
       clearInterval(this.eventPollingInterval)
       this.eventPollingInterval = null
@@ -497,7 +646,7 @@ class CanteenScheduler {
       } catch (_) {}
 
       try {
-        await this.container.stop()
+        await this.container.stop({ t: 5 })
         await this.container.remove()
       } catch (_) {}
 

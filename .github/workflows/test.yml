@@ -28,6 +28,21 @@ jobs:
           npx truffle test --config truffle-config.cjs test/canteen_test.js
           kill %1 2>/dev/null || true
 
+  dashboard:
+    name: Dashboard tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: canteen/dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm install
+      - run: CI=true npx react-scripts test --watchAll=false --env=jsdom
+
   compose:
     name: Docker compose build
     runs-on: ubuntu-latest

@@ -6,7 +6,7 @@
   <title>Veil Stack — Decentralized Container Orchestration</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -14,67 +14,108 @@
       background: #0a0e1a;
       color: #e0e4ef;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
+      line-height: 1.6;
     }
-    .card {
-      max-width: 640px;
-      width: 100%;
-    }
-    .badge {
+    .page { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
+
+    /* Hero */
+    .hero { text-align: center; margin-bottom: 3.5rem; }
+    .hero-badge {
       display: inline-block;
       font-size: 0.65rem;
       font-weight: 600;
       color: #818cf8;
-      background: rgba(129, 140, 248, 0.12);
-      padding: 0.2rem 0.55rem;
+      background: rgba(129,140,248,0.12);
+      padding: 0.25rem 0.7rem;
       border-radius: 4px;
-      letter-spacing: 0.03em;
       text-transform: uppercase;
-      vertical-align: middle;
-      margin-left: 0.75rem;
-    }
-    h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.25rem;
-    }
-    .tagline {
-      font-size: 0.95rem;
-      color: #6b7280;
-      margin-bottom: 2.5rem;
-      line-height: 1.5;
-    }
-    .section {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 12px;
-      padding: 1.25rem 1.5rem;
+      letter-spacing: 0.06em;
       margin-bottom: 1rem;
     }
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+    .tagline {
+      font-size: 1.1rem;
+      color: #6b7280;
+      max-width: 540px;
+      margin: 0 auto 2rem;
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 6px rgba(52,211,153,0.5);
+    }
+    .status-dot.amber { background: #fbbf24; box-shadow: 0 0 6px rgba(251,191,36,0.5); }
+    .status-dot.red { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.5); }
+
+    /* Section */
+    .section { margin-bottom: 3rem; }
     .section-label {
       font-size: 0.65rem;
       font-weight: 600;
       color: #6b7280;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
     }
-    .section p {
-      font-size: 0.88rem;
-      color: #c0c4d0;
-      line-height: 1.6;
+
+    /* Cards */
+    .card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
     }
-    .address {
+    .card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e0e4ef;
+      margin-bottom: 0.3rem;
+    }
+    .card p {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      line-height: 1.5;
+    }
+
+    /* Feature grid */
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    /* Contract card */
+    .contract {
       font-family: 'JetBrains Mono', 'SF Mono', monospace;
       font-size: 0.82rem;
       color: #818cf8;
       background: rgba(129,140,248,0.08);
-      padding: 0.6rem 1rem;
+      padding: 0.65rem 1rem;
       border-radius: 8px;
       word-break: break-all;
       display: inline-block;
@@ -85,52 +126,194 @@
       text-decoration: none;
       transition: color 0.15s;
     }
-    a:hover {
-      color: #a5b4fc;
-      text-decoration: underline;
-    }
+    a:hover { color: #a5b4fc; text-decoration: underline; }
     .links {
       display: flex;
       gap: 1.5rem;
       flex-wrap: wrap;
-      margin-top: 0.5rem;
+      margin-top: 0.75rem;
     }
-    .links a {
-      font-size: 0.82rem;
-      font-weight: 500;
+    .links a { font-size: 0.82rem; font-weight: 500; }
+
+    /* Tech stack */
+    .tech-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
     }
+    .tech-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #c0c4d0;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+    }
+
+    /* Architecture flow */
+    .flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .flow-node {
+      background: rgba(129,140,248,0.1);
+      border: 1px solid rgba(129,140,248,0.2);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      text-align: center;
+      min-width: 110px;
+    }
+    .flow-node .flow-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #e0e4ef;
+    }
+    .flow-node .flow-sub {
+      font-size: 0.65rem;
+      color: #6b7280;
+      margin-top: 0.15rem;
+    }
+    .flow-arrow {
+      font-size: 1.2rem;
+      color: #4b5563;
+      padding: 0 0.4rem;
+      flex-shrink: 0;
+    }
+
+    /* Footer */
     .footer {
-      margin-top: 2rem;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
       font-size: 0.75rem;
       color: #4b5563;
       text-align: center;
     }
+
+    @media (max-width: 600px) {
+      .features { grid-template-columns: 1fr; }
+      h1 { font-size: 2rem; }
+      .flow { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Veil Stack <span class="badge">v0.2.0</span></h1>
-    <p class="tagline">Decentralized container orchestration on Filecoin.<br>Schedule Docker workloads through smart contracts and a libp2p peer mesh.</p>
+  <div class="page">
+    <div class="hero">
+      <div class="hero-badge">v0.2.0</div>
+      <h1>Veil Stack</h1>
+      <p class="tagline">Decentralized container orchestration on Filecoin. Schedule Docker workloads through smart contracts and a libp2p peer mesh.</p>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-item"><div class="status-dot"></div>Contract Verified</div>
+      <div class="status-item"><div class="status-dot"></div>CI Passing</div>
+      <div class="status-item"><div class="status-dot"></div>13 Tests</div>
+      <div class="status-item"><div class="status-dot"></div>MIT License</div>
+    </div>
 
     <div class="section">
-      <div class="section-label">Smart Contract</div>
-      <p>Deployed and verified on Filecoin Calibration.</p>
-      <div class="address">0x686d5d622298cfca880168Badf83ac3F71C4a33A</div>
-      <div class="links">
-        <a href="https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A" target="_blank">Filfox ↗</a>
-        <a href="https://github.com/shivv23/Veil-Stack/blob/main/canteen/contracts/Canteen.sol" target="_blank">Source ↗</a>
+      <div class="section-label">Features</div>
+      <div class="features">
+        <div class="card">
+          <h3>On-Chain Governance</h3>
+          <p>Container scheduling decisions are recorded on FEVM. Member registration, image assignments, and status reports are all verifiable on-chain.</p>
+        </div>
+        <div class="card">
+          <h3>libp2p Mesh</h3>
+          <p>Nodes discover each other via mDNS and bootstrap, communicate over encrypted TCP channels, and maintain cluster state through GossipSub heartbeats.</p>
+        </div>
+        <div class="card">
+          <h3>Container Orchestration</h3>
+          <p>Automatic image pulling, port detection, health checks, restart policies, and resource limits (CPU/memory). Zero-downtime image swaps.</p>
+        </div>
+        <div class="card">
+          <h3>IPFS Persistence</h3>
+          <p>Container metadata and image manifests are pinned to IPFS via Pinata, creating an immutable audit trail of every deployment.</p>
+        </div>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-label">How It Works</div>
-      <p>V1 connects container scheduling to on-chain governance. Nodes join a libp2p mesh, the contract tracks image deployments and replica counts, and a scheduler loop provisions containers across the cluster. V2 will add automated deal origination to persist workload state on Filecoin.</p>
+      <div class="section-label">Architecture</div>
+      <div class="card">
+        <div class="flow">
+          <div class="flow-node">
+            <div class="flow-title">Canteen.sol</div>
+            <div class="flow-sub">FEVM Contract</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <div class="flow-title">Scheduler</div>
+            <div class="flow-sub">Node.js Loop</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <div class="flow-title">Docker</div>
+            <div class="flow-sub">Container Runtime</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <div class="flow-title">libp2p</div>
+            <div class="flow-sub">Peer Mesh</div>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node">
+            <div class="flow-title">IPFS</div>
+            <div class="flow-sub">Pinata Pinning</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Smart Contract</div>
+      <div class="card">
+        <p>Deployed and verified on Filecoin Calibration. Handles member registration, image scheduling with ratio-based rebalancing, port mapping, and on-chain status reporting with caller authorization.</p>
+        <div class="contract">0x686d5d622298cfca880168Badf83ac3F71C4a33A</div>
+        <div class="links">
+          <a href="https://calibration.filfox.info/en/address/0x686d5d622298cfca880168Badf83ac3F71C4a33A" target="_blank">Filfox ↗</a>
+          <a href="https://github.com/shivv23/Veil-Stack/blob/main/canteen/contracts/Canteen.sol" target="_blank">Source ↗</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Tech Stack</div>
+      <div class="card">
+        <div class="tech-row">
+          <span class="tech-badge">Solidity 0.8</span>
+          <span class="tech-badge">Filecoin FEVM</span>
+          <span class="tech-badge">Node.js</span>
+          <span class="tech-badge">libp2p</span>
+          <span class="tech-badge">GossipSub</span>
+          <span class="tech-badge">Docker</span>
+          <span class="tech-badge">Express</span>
+          <span class="tech-badge">React</span>
+          <span class="tech-badge">D3.js</span>
+          <span class="tech-badge">Web3.js</span>
+          <span class="tech-badge">IPFS</span>
+          <span class="tech-badge">Pinata</span>
+          <span class="tech-badge">MetaMask</span>
+        </div>
+      </div>
     </div>
 
     <div class="section">
       <div class="section-label">Source Code</div>
-      <div class="links">
-        <a href="https://github.com/shivv23/Veil-Stack" target="_blank">GitHub Repository ↗</a>
+      <div class="card">
+        <p>Open source under MIT license. 8 contract tests, 5 integration tests, CI on every push.</p>
+        <div class="links">
+          <a href="https://github.com/shivv23/Veil-Stack" target="_blank">GitHub Repository ↗</a>
+          <a href="https://github.com/shivv23/Veil-Stack/tree/main/canteen/test" target="_blank">Tests ↗</a>
+        </div>
       </div>
     </div>
 

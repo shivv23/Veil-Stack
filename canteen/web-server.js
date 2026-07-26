@@ -82,6 +82,22 @@ class WebServer {
       })
     })
 
+    app.get('/health/summary', (req, res) => {
+      if (!this.scheduler) {
+        return res.status(200).json({ status: 'degraded', reason: 'no-scheduler' })
+      }
+      res.status(200).json(this.scheduler.getHealthSummary())
+    })
+
+    app.get('/metrics', (req, res) => {
+      if (!this.scheduler) {
+        return res.status(200).json({ cpu: 0, memory: 0, memoryLimit: 0, restarts: 0 })
+      }
+      res.status(200).json(this.scheduler.getMetrics())
+    })
+
+
+
     app.get('/containers', async (req, res) => {
       if (!this.scheduler || !this.scheduler.docker) {
         return res.status(200).json({ containers: [], dockerAvailable: false })
