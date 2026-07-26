@@ -50,17 +50,6 @@ const Title = styled.h1`
   margin: 0;
 `
 
-const VersionBadge = styled.span`
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #818cf8;
-  background: rgba(129, 140, 248, 0.12);
-  padding: 0.2rem 0.55rem;
-  border-radius: 4px;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-`
-
 const Subtitle = styled.p`
   font-size: 0.85rem;
   color: #6b7280;
@@ -648,7 +637,6 @@ class App extends Component {
             <div>
               <Logo>
                 <Title>Veil Stack</Title>
-                <VersionBadge>v0.2.0</VersionBadge>
               </Logo>
               <Subtitle>Decentralized container orchestration on Filecoin</Subtitle>
             </div>
