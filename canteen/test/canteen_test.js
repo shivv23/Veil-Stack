@@ -1,4 +1,4 @@
-const { BN } = require('web3-utils');
+const { BN, keccak256 } = require('web3-utils');
 const Canteen = artifacts.require("Canteen");
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
@@ -111,7 +111,7 @@ contract('Canteen', accounts => {
 
       const tx = await canteen.reportStatus("host1", "nginx:latest", "running");
       tx.logs[0].event.should.equal('StatusReport');
-      tx.logs[0].args.host.should.equal('host1');
+      tx.logs[0].args.host.should.equal(keccak256('host1'));
       tx.logs[0].args.image.should.equal('nginx:latest');
       tx.logs[0].args.state.should.equal('running');
     });
