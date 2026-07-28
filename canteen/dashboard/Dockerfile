@@ -4,7 +4,7 @@ COPY package.json package-lock.json ./
 RUN npm install
 COPY public/ public/
 COPY src/ src/
-RUN NODE_OPTIONS=--openssl-legacy-provider npm run build
+RUN npm run build
 
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html

@@ -489,7 +489,7 @@ Cloud infrastructure concentration is a core concern for European digital sovere
 | Member lifecycle | 1 | Add/remove members, image assignment |
 | Image management | 1 | Add/remove images, rebalancing, port mapping |
 | Status reporting | 4 | reportStatus, getMemberStatus, event emission, non-member rejection, cleanup on removal |
-| Node counting | 2 | getNodeCount accuracy across add/remove |
+| Node counting | 1 | getNodeCount accuracy across add/remove |
 
 ### Integration Tests (`test/integration_test.js`)
 
