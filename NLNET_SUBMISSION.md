@@ -325,18 +325,115 @@ This is feasible because Veil Stack is in testnet/development phase. A productio
 
 ---
 
+## Budget Justification
+
+### Rate
+
+€25/hr reflects two contributors working from South Asia, where infrastructure and living costs are significantly lower than Western Europe or North America. This rate is competitive for Solidity + libp2p + Filecoin development in the region and allows the team to deliver the full scope within the €45,000 budget.
+
+### Hour Allocation Rationale
+
+| Task Category | Hours | Justification |
+|---|---|---|
+| **Solidity development** (Canteen.sol V2) | 120 | StorageDeal struct, events, integration with Lotus JSON-RPC. Smart contract development requires careful testing and gas optimization. |
+| **Backend services** (filecoin-service.js, scheduler, provider logic) | 430 | Lotus JSON-RPC integration, deal lifecycle, multi-provider failover, CID verification, retry logic. This is the bulk of V2 — new backend modules that don't exist yet. |
+| **FHE integration** | 300 | Research-level work (Zama fhEVM SDK), encrypted telemetry, ciphertext scheduling, key management. Includes 2-week spike to assess feasibility. |
+| **Frontend** (dashboard, analytics) | 100 | Deal tab, provider health view, FHE status dashboard. Build on existing React + D3 foundation. |
+| **Testing & CI** | 220 | Integration tests, 10-node CI pipeline, end-to-end cluster tests, failure simulation. |
+| **Security audit** | 100 | External audit coordination, remediation, side-channel review for FHE. |
+| **Documentation** | 90 | Architecture docs, API reference, provider setup guides, operator manuals. |
+| **Project management** | 440 | Cross-milestone coordination, dependency management, CI/CD maintenance, code review. |
+
+### Cost per Milestone
+
+| Milestone | Hours | Cost | What the Hours Buy |
+|---|---|---|---|
+| M1 | 600 | €15,000 | 600 hrs ÷ 2 people = ~15 weeks of focused development on Filecoin deal pipeline |
+| M2 | 480 | €12,000 | 480 hrs ÷ 2 people = ~12 weeks on CID verification + multi-provider |
+| M3 | 520 | €13,000 | 520 hrs ÷ 2 people = ~13 weeks on FHE (includes research spike) |
+| M4 | 200 | €5,000 | 200 hrs ÷ 2 people = ~5 weeks on hardening + audit |
+
+---
+
+## Sustainability
+
+### Post-Grant Maintenance
+
+Veil Stack is designed for low ongoing maintenance costs:
+- **Infrastructure**: Calibration testnet is free; mainnet storage deals are self-funding (users pay gas + deal fees)
+- **Development**: The codebase is Node.js + Solidity — no expensive toolchains or licenses
+- **Community**: Open source under MIT; contributions welcome via GitHub PRs
+
+### Revenue Model (Post-Grant)
+
+Veil Stack is not a SaaS product — it's infrastructure software. Long-term sustainability comes from:
+
+1. **Consulting and integration**: Organizations deploying Veil Stack in production will need setup, customization, and ongoing support. This is the primary revenue path for small open source teams.
+2. **Managed deployment packages**: Pre-configured Docker Compose or Helm charts for specific use cases (research computing, fintech compliance, multi-org clusters).
+3. **Filecoin ecosystem grants**: As Veil Stack drives storage deal volume, it becomes eligible for Filecoin ecosystem funding (Filecoin Foundation, Protocol Labs grants).
+4. **EU funding alignment**: European digital sovereignty initiatives (Gaia-X, IPCEI Cloud) may fund infrastructure projects that reduce hyperscaler dependency.
+
+### Risk: What if the team disbands?
+
+The codebase is open source and MIT-licensed. If the core team stops development:
+- The existing V1 code continues to work (no external dependencies that expire)
+- The smart contract is immutable on-chain — it cannot be shut down
+- Any competent Solidity + Node.js developer can fork and maintain the project
+- The libp2p and Docker components are well-documented open standards
+
+### Community Building Plan
+
+- **M1-M2**: Publish blog posts on Filecoin and libp2p community forums documenting the deal pipeline architecture
+- **M3**: Present FHE scheduling demo at Filecoin community calls or EthGlobal hackathons
+- **M4**: Submit to Filecoin ecosystem directory; publish security audit results publicly
+- **Post-grant**: Maintain GitHub Issues/PRs; respond to community contributions within 48 hours
+
+---
+
+## Timeline
+
+```
+Month    1         2         3         4         5         6
+         ┌─────────────────────────────────┐
+M1       │ Canteen V2 │ Lotus │ Deal    │ Dashboard + Tests │
+(€15k)   │ Solidity   │ JSON  │ Lifecycle│ Integration       │
+         │            │ RPC   │          │                   │
+         └─────────────────────────────────┘
+                                 ┌─────────────────────────┐
+M2                          ┌────│ CID Verify │ Multi-     │
+(€12k)                       │    │ + Tests    │ Provider   │
+                             │    │            │ + Docs     │
+                             │    └─────────────────────────┘
+              ┌──────────────────────────────────────────┐
+M3           │ Research │ SDK    │ Ciphertext │ Bench- │
+(€13k)       │ Spike    │ Integ │ Scheduling │ marks  │
+             │ (2 wk)   │       │            │ + Demo │
+             └──────────────────────────────────────────┘
+                                                   ┌─────────────┐
+M4                                            ┌────│ Audit │ CI  │
+(€5k)                                         │    │ + Docs│     │
+                                              │    └─────────────┘
+```
+
+**Key dependencies**:
+- M2 depends on M1 (CID verification requires deal records from M1)
+- M3 runs in parallel with M1/M2 (no dependency on deal pipeline)
+- M4 depends on M1-M3 (audit and hardening after features are complete)
+
+---
+
 ## Societal Impact & Strategic Relevance
 
 ### Who Benefits
 
 **European SMEs and Research Institutions**
-Small companies and universities building cloud-native applications are locked into hyperscaler orchestration (EKS, GKE). They pay escalating costs, lose control over data placement, and have no portability path. Veil Stack provides a self-sovereign alternative: deploy on your own infrastructure, governed by an open contract, with no vendor dependency.
+A German research hospital needs to run ML inference workloads across three distributed nodes without exposing patient data to a shared control plane. A Polish fintech startup needs verifiable deployment records for ECB compliance but cannot afford a dedicated DevOps team. A Dutch university consortium wants to share compute resources across campuses without centralizing control with any single institution. These organizations are currently locked into hyperscaler orchestration (EKS, GKE) — paying escalating costs, losing control over data placement, and facing compliance gaps with no current solution. Veil Stack provides an open alternative: deploy on your own infrastructure, governed by a public smart contract, with no vendor dependency.
 
 **Regulated Industries**
-Healthcare, finance, and government organizations cannot expose scheduling metrics to shared control planes. Veil Stack's planned FHE layer enables confidential scheduling — nodes participate in a cluster without seeing each other's resource data. This makes multi-org collaboration possible where it is currently blocked by data protection requirements.
+Healthcare, finance, and government organizations cannot expose scheduling metrics to shared control planes. Veil Stack's planned FHE layer (M3) will enable confidential scheduling — nodes participate in a cluster without seeing each other's resource data. This makes multi-org collaboration possible where it is currently blocked by data protection requirements.
 
 **The Filecoin Ecosystem**
-Every container deployment on Veil Stack originates a paid Filecoin storage deal. This creates programmatic demand for Filecoin's storage market, turning container orchestration into a demand engine for decentralized storage — directly advancing the Filecoin network's utility and economic sustainability.
+Veil Stack creates programmatic demand for Filecoin's storage market. V1 already pins deployment manifests to IPFS via Pinata for verifiable records. V2 will tie every container deployment to a paid Filecoin storage deal — turning container orchestration into a demand engine for decentralized storage and directly advancing the network's utility.
 
 **Open Source Infrastructure Commons**
 Veil Stack is built entirely on open standards: libp2p (used by IPFS, Ethereum 2.0, Polkadot), FEVM (Filecoin's EVM), IPFS (verifiable content addressing), and Docker (open container runtime). No proprietary components. The entire stack is MIT-licensed and auditable.
@@ -347,7 +444,7 @@ Veil Stack is built entirely on open standards: libp2p (used by IPFS, Ethereum 2
 |---|---|
 | **User sovereignty** | Cluster membership and configuration live on a public smart contract, not a vendor's API server |
 | **Open standards** | libp2p, FEVM, IPFS, Docker — all open protocols, no proprietary lock-in |
-| **Verifiable computation** | Every deployment is pinned to IPFS with a CID; every state change is on-chain |
+| **Verifiable computation** | Deployment manifests are pinned to IPFS with a CID (V1); V2 will anchor every deployment CID on-chain |
 | **Privacy by design** | FHE scheduling (planned) enables confidential clusters without trusted intermediaries |
 | **Decentralized infrastructure** | No central control plane; nodes are autonomous peers coordinating via libp2p |
 
@@ -357,6 +454,13 @@ Cloud infrastructure concentration is a core concern for European digital sovere
 
 ### Measurable Outcomes (If Funded)
 
+**V1 (Already Delivered)**:
+- Smart contract deployed and verified on Filecoin Calibration with on-chain membership management
+- Event-driven scheduler with Docker runtime integration
+- Web dashboard with D3 cluster visualization and MetaMask integration
+- 20 tests (8 contract + 5 integration + 7 dashboard), CI passing
+
+**V2 (This Funding)**:
 - **M1**: Every container deployment triggers a Filecoin storage deal — first verifiable deployment pipeline on FEVM
 - **M2**: CID-verified image retrieval with automatic provider failover — tamper-evident supply chain for container images
 - **M3**: 5-node FHE scheduling demo — first encrypted orchestration cluster on Filecoin (pending fhEVM compatibility assessment)
